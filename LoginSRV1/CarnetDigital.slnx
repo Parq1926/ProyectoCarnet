@@ -1,4 +1,6 @@
 <Solution>
+  <Project Path="../BitacoraSRV9/BitacoraSRV9.csproj" Id="a96a725e-29d5-4d5a-8d29-80f0cc8d01a4" />
+  <Project Path="../RolSRV8/RolSRV8.csproj" Id="22f5a53f-8ff1-4589-9718-ebd368c91890" />
   <Project Path="../TipoIdentificacionSRV6/TipoIdentificacionSRV6.csproj" />
   <Project Path="../TipoUsuarioSRV5/TipoUsuarioSRV5.csproj" />
   <Project Path="LoginSRV1.csproj" />

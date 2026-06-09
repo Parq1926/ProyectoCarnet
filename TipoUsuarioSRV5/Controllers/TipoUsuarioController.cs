@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using TipoUsuarioSRV5.Data;
 using TipoUsuarioSRV5.DTOs;
 using TipoUsuarioSRV5.Models;
+//__Para usar el micro servicio Bitacora--
+using System.Net.Http.Json;
+//_____
 
 namespace TipoUsuarioSRV5.Controllers;
 
@@ -48,8 +51,25 @@ public class TipoUsuarioController : ControllerBase
             return Conflict(new { mensaje = "El tipo de usuario ya existe" });
 
         var tipo = new TipoUsuario { Nombre = dto.Nombre };
+        
+
+        
         _context.TiposUsuario.Add(tipo);
         await _context.SaveChangesAsync();
+
+        // ||||||| LLAMADA  AL   MICROSERVICIO    PARA     LA     BIITACORA |||||||
+
+        var cliente = new HttpClient();
+
+        await cliente.PostAsJsonAsync(
+            "http://localhost:5209/bitacora",
+            new
+            {
+                usuario = User.Identity?.Name,
+                Accion = "Creo un nuevo tipo de Usuario"
+            });
+
+        // |||| FIN DE LLAMADA AL MICROSERVICIO  ||||
 
         return CreatedAtAction(nameof(GetById), new { id = tipo.Id },
             new TipoUsuarioDto { Id = tipo.Id, Nombre = tipo.Nombre });

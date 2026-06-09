@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Progra 5\\ProyectoCarnet\\ProyectoCarnet-main\\LoginSRV1\\LoginSRV1.csproj": {}
+    "C:\\Users\\Nazareth\\Documents\\TI\\Programacion V\\Proyecto\\ProyectoCarnet\\LoginSRV1\\LoginSRV1.csproj": {}
   },
   "projects": {
-    "C:\\Progra 5\\ProyectoCarnet\\ProyectoCarnet-main\\LoginSRV1\\LoginSRV1.csproj": {
+    "C:\\Users\\Nazareth\\Documents\\TI\\Programacion V\\Proyecto\\ProyectoCarnet\\LoginSRV1\\LoginSRV1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Progra 5\\ProyectoCarnet\\ProyectoCarnet-main\\LoginSRV1\\LoginSRV1.csproj",
+        "projectUniqueName": "C:\\Users\\Nazareth\\Documents\\TI\\Programacion V\\Proyecto\\ProyectoCarnet\\LoginSRV1\\LoginSRV1.csproj",
         "projectName": "LoginSRV1",
-        "projectPath": "C:\\Progra 5\\ProyectoCarnet\\ProyectoCarnet-main\\LoginSRV1\\LoginSRV1.csproj",
-        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
-        "outputPath": "C:\\Progra 5\\ProyectoCarnet\\ProyectoCarnet-main\\LoginSRV1\\obj\\",
+        "projectPath": "C:\\Users\\Nazareth\\Documents\\TI\\Programacion V\\Proyecto\\ProyectoCarnet\\LoginSRV1\\LoginSRV1.csproj",
+        "packagesPath": "C:\\Users\\Nazareth\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Nazareth\\Documents\\TI\\Programacion V\\Proyecto\\ProyectoCarnet\\LoginSRV1\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Nazareth\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
