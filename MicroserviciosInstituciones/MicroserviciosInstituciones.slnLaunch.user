@@ -1,0 +1,19 @@
+[
+  {
+    "Name": "Nuevo perfil",
+    "Projects": [
+      {
+        "Path": "SRV2_Instituciones\\SRV2_Instituciones.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "SRV3_Carreras\\SRV3_Carreras.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "SRV4_Areas\\SRV4_Areas.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

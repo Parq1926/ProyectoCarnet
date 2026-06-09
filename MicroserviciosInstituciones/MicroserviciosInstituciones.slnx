@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SRV2_Instituciones/SRV2_Instituciones.csproj" />
+  <Project Path="SRV3_Carreras/SRV3_Carreras.csproj" />
+  <Project Path="SRV4_Areas/SRV4_Areas.csproj" />
+</Solution>
