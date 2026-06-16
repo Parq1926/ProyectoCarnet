@@ -1,7 +1,6 @@
-using SRV11_Autoregistro;
+using SRV11_AutoRegistro;
 using SRV11_AutoRegistro.Services;
 using SRV11_AutoRegistro.Repository;
-using SRV2_Instituciones.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,15 +9,24 @@ builder.Services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
 builder.Services.AddScoped<UsuarioRepository>();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<UsuarioCarreraRepository>();
+builder.Services.AddScoped<UsuarioAreaRepository>();
+builder.Services.AddScoped<UsuarioInstitucionRepository>();
+builder.Services.AddScoped<UsuarioTelefonoRepository>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddScoped<BitacoraService>();
 
-builder.Services.AddScoped<IEmailService, EmailService>();
+//builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddHttpClient();
 
+builder.Services.AddHttpClient<IInstitucionService, InstitucionService>();
+builder.Services.AddHttpClient<ICarreraService, CarreraService>();
+builder.Services.AddHttpClient<IAreaService, AreaService>();
+
 var app = builder.Build();
 
-app.MapAutoregistroEndpoints();
+app.MapAutoRegistroEndpoints();
 
 app.Run();

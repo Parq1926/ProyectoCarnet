@@ -1,179 +1,276 @@
 ﻿using SRV11_AutoRegistro.Entities;
-using SRV11_AutoRegistro.Services;
 using SRV11_AutoRegistro.Repository;
-using System.Net.Mail;
-using System.Security.Cryptography;
-using System.Text;
-using System.Net.Http.Json;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 
 
-namespace SRV11_AutoRegistro.Services;
-
-public class UsuarioService : IUsuarioService
+namespace SRV11_AutoRegistro.Services
 {
-    private readonly UsuarioRepository _repository;
-    private readonly IConfiguration _configuration;
-
-    public UsuarioService(
-        UsuarioRepository repository,
-        IConfiguration configuration)
+    public class UsuarioService : IUsuarioService
     {
-        _repository = repository;
-        _configuration = configuration;
-    }
+        private readonly UsuarioRepository _repository;
+        private readonly UsuarioCarreraRepository _carreraRepository;
+        private readonly UsuarioAreaRepository _areaRepository;
+        private readonly UsuarioInstitucionRepository _institucionRepository;
+        private readonly IInstitucionService _institucionService;
+        private readonly ICarreraService _carreraService;
+        private readonly IAreaService _areaService;
+        private readonly UsuarioTelefonoRepository _telefonoRepository;
+        private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-    private bool IsValidEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return false;
 
-        try
+        public UsuarioService(
+            UsuarioRepository repository,
+            UsuarioCarreraRepository carreraRepository,
+            UsuarioAreaRepository areaRepository,
+            UsuarioInstitucionRepository institucionRepository,
+            IInstitucionService institucionService,
+            ICarreraService carreraService,
+            IAreaService areaService,
+            UsuarioTelefonoRepository telefonoRepository,
+                IConfiguration configuration,
+                    IEmailService emailService)
         {
-            var addr = new MailAddress(email);
-            return addr.Address == email;
+            _repository = repository;
+            _carreraRepository = carreraRepository;
+            _areaRepository = areaRepository;
+            _institucionRepository = institucionRepository;
+
+            _institucionService = institucionService;
+            _carreraService = carreraService;
+            _areaService = areaService;
+            _telefonoRepository = telefonoRepository;
+            _configuration = configuration;
+            _emailService = emailService;
         }
-        catch
+
+        public async Task<(bool ok, string error, string token)> RegistrarAsync(Usuario usuario)
         {
-            return false;
-        }
-    }
+            if (usuario.TipoUsuarioId <= 0)
+                return (false, "Debe indicar un tipo de usuario", "");
 
-    private string HashPassword(string password)
-    {
-        using var sha = SHA256.Create();
+            if (usuario.TipoIdentificacionId <= 0)
+                return (false, "Debe indicar un tipo de identificación", "");
 
-        var hash =
-            sha.ComputeHash(
-                Encoding.UTF8.GetBytes(password));
+            if (string.IsNullOrWhiteSpace(usuario.NumeroIdentificacion))
+                return (false, "La identificación es requerida", "");
 
-        return Convert.ToBase64String(hash);
-    }
+            if (string.IsNullOrWhiteSpace(usuario.Email))
+                return (false, "El email es requerido", "");
 
-    private async Task<bool> ValidarDominio(string email)
-    {
-        try
-        {
-            using var httpClient = new HttpClient();
-
-            var instituciones =
-                await httpClient.GetFromJsonAsync<List<Institucion>>
-                (
-                    "http://localhost:7002/institucion"
-                );
-
-            if (instituciones == null)
-                return false;
-
-            var dominioCorreo =
-                email.Split('@')[1].ToLower();
-
-            foreach (var institucion in instituciones)
+            if (!Regex.IsMatch(
+                usuario.Email,
+                @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
             {
-                var dominios =
-                    institucion.Dominios.Split(',');
+                return (false, "Formato de email inválido", "");
+            }
 
-                foreach (var dominio in dominios)
+            if (string.IsNullOrWhiteSpace(usuario.NombreCompleto))
+                return (false, "El nombre completo es requerido", "");
+
+            if (string.IsNullOrWhiteSpace(usuario.Contrasena))
+                return (false, "La contraseña es requerida", "");
+
+            // Validación estudiante
+            if (usuario.TipoUsuarioId == 1)
+            {
+                if (usuario.CarrerasAsociadas == null ||
+                    !usuario.CarrerasAsociadas.Any())
                 {
-                    if (dominio.Trim().ToLower() == dominioCorreo)
-                        return true;
+                    return (false,
+                        "El estudiante debe tener al menos una carrera",
+                        "");
                 }
             }
 
-            return false;
+            // Validación funcionario
+            if (usuario.TipoUsuarioId == 4)
+            {
+                if (usuario.AreasAsociadas == null ||
+                    !usuario.AreasAsociadas.Any())
+                {
+                    return (false,
+                        "El funcionario debe tener al menos un área",
+                        "");
+                }
+            }
+
+            var existe = await _repository.GetByEmailAsync(usuario.Email);
+
+            if (existe is not null)
+                return (false, "Ya existe un usuario con ese correo", "");
+
+
+            if (!usuario.Instituciones.Any())
+            {
+                return (false,
+                    "Debe seleccionar al menos una institución",
+                    "");
+            }
+
+            var dominioCorreo = usuario.Email
+                .Split('@')
+                .Last()
+                .Trim()
+                .ToLower();
+
+            var dominioValido = false;
+
+            foreach (var institucionId in usuario.Instituciones)
+            {
+                var institucion =
+                    await _institucionService.GetById(institucionId);
+
+                if (institucion is null)
+                {
+                    return (
+                        false,
+                        $"La institución {institucionId} no existe",
+                        ""
+                    );
+                }
+
+                var dominios = institucion.Dominios
+                    .Split(',')
+                    .Select(x => x.Trim().ToLower());
+
+                if (dominios.Contains(dominioCorreo))
+                {
+                    dominioValido = true;
+                }
+            }
+
+            if (!dominioValido)
+            {
+                return (
+                    false,
+                    "El dominio del correo no pertenece a ninguna institución seleccionada",
+                    ""
+                );
+            }
+
+            if (usuario.TipoUsuarioId == 1)
+            {
+                foreach (var carreraId in usuario.CarrerasAsociadas)
+                {
+                    var carrera =
+                        await _carreraService.GetById(carreraId);
+
+                    if (carrera is null)
+                    {
+                        return (
+                            false,
+                            $"La carrera {carreraId} no existe",
+                            ""
+                        );
+                    }
+                }
+            }
+
+            if (usuario.TipoUsuarioId == 4)
+            {
+                foreach (var areaId in usuario.AreasAsociadas)
+                {
+                    var area =
+                        await _areaService.GetById(areaId);
+
+                    if (area is null)
+                    {
+                        return (
+                            false,
+                            $"El área {areaId} no existe",
+                            ""
+                        );
+                    }
+                }
+            }
+
+            var token = Guid.NewGuid().ToString();
+
+            usuario.Contrasena =
+                BCrypt.Net.BCrypt.HashPassword(usuario.Contrasena);
+
+            usuario.Activo = true;
+            usuario.Confirmado = false;
+            usuario.FechaCreacion = DateTime.Now;
+            usuario.TokenConfirmacion = token;
+            var minutosExpiracion =
+                _configuration.GetValue<int>("TokenExpirationMinutes");
+
+            usuario.FechaExpiracion =
+                DateTime.Now.AddMinutes(minutosExpiracion);
+
+            var usuarioId = await _repository.CreateAsync(usuario);
+
+            var enlaceConfirmacion =
+                $"http://localhost:5221/autoregistro/confirmar/{token}";
+
+            await _emailService.EnviarCorreoConfirmacionAsync(
+                usuario.Email,
+                enlaceConfirmacion);
+
+            // Instituciones
+            if (usuario.Instituciones != null)
+            {
+                foreach (var institucionId in usuario.Instituciones)
+                {
+                    await _institucionRepository
+                        .AgregarAsync(usuarioId, institucionId);
+                }
+            }
+
+            // Carreras
+            if (usuario.CarrerasAsociadas != null)
+            {
+                foreach (var carreraId in usuario.CarrerasAsociadas)
+                {
+                    await _carreraRepository
+                        .AgregarAsync(usuarioId, carreraId);
+                }
+            }
+
+            // Áreas
+            if (usuario.AreasAsociadas != null)
+            {
+                foreach (var areaId in usuario.AreasAsociadas)
+                {
+                    await _areaRepository
+                        .AgregarAsync(usuarioId, areaId);
+                }
+            }
+
+            // Teléfonos
+            if (usuario.Telefonos != null)
+            {
+                foreach (var telefono in usuario.Telefonos)
+                {
+                    await _telefonoRepository
+                        .AgregarAsync(usuarioId, telefono);
+                }
+            }
+
+            return (true, string.Empty, token);
         }
-        catch
+
+
+
+        public async Task<(bool ok, string error)> ConfirmarCuentaAsync(string token)
         {
-            return false;
+            var usuario = await _repository.GetByTokenAsync(token);
+
+            if (usuario is null)
+                return (false, "Token inválido");
+
+            if (usuario.FechaExpiracion is null)
+                return (false, "El token no tiene fecha de expiración");
+
+            if (usuario.FechaExpiracion < DateTime.Now)
+                return (false, "El token ha expirado");
+
+            await _repository.ConfirmarCuentaAsync(usuario.ID);
+
+            return (true, string.Empty);
         }
-    }
-
-    public async Task<(bool success, string message, string? token)>
-        Registrar(CreateUsuarioRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Email))
-            return (false, "El email es requerido", null);
-
-        if (!IsValidEmail(request.Email))
-            return (false, "El email no es valido", null);
-
-        if (string.IsNullOrWhiteSpace(request.NombreCompleto))
-            return (false,
-                "El nombre completo es requerido",
-                null);
-
-        if (string.IsNullOrWhiteSpace(request.Identificacion))
-            return (false,
-                "La identificacion es requerida",
-                null);
-
-        if (string.IsNullOrWhiteSpace(request.Password))
-            return (false,
-                "La contraseña es requerida",
-                null);
-
-        if (await _repository.ExistsByEmail(request.Email))
-            return (false,
-                "Ya existe un usuario con ese correo",
-                null);
-
-        var minutos =
-            _configuration.GetValue<int>(
-                "TokenExpirationMinutes",
-                15);
-
-        var token = Guid.NewGuid().ToString();
-
-        var usuario = new Usuario
-        {
-            Email = request.Email.Trim(),
-            TipoIdentificacionID =
-                request.TipoIdentificacionID,
-            Identificacion =
-                request.Identificacion.Trim(),
-            NombreCompleto =
-                request.NombreCompleto.Trim(),
-            PasswordHash =
-                HashPassword(request.Password),
-            TipoUsuarioID =
-                request.TipoUsuarioID,
-            RolID =
-                request.RolID,
-            Confirmado = false,
-            TokenConfirmacion = token,
-            FechaExpiracion =
-                DateTime.Now.AddMinutes(minutos),
-            Activo = true
-        };
-
-        await _repository.Create(usuario);
-
-        return (
-            true,
-            "Usuario registrado exitosamente",
-            token
-        );
-    }
-
-    public async Task<(bool success, string message)>
-        ConfirmarCuenta(string token)
-    {
-        if (string.IsNullOrWhiteSpace(token))
-            return (false, "Token invalido");
-
-        var usuario =
-            await _repository.GetByToken(token);
-
-        if (usuario == null)
-            return (false, "Token no encontrado");
-
-        if (usuario.FechaExpiracion < DateTime.Now)
-            return (false, "El token ha expirado");
-
-        var confirmado =
-            await _repository.ConfirmarCuenta(token);
-
-        return confirmado
-            ? (true, "Cuenta confirmada correctamente")
-            : (false, "No se pudo confirmar la cuenta");
     }
 }
