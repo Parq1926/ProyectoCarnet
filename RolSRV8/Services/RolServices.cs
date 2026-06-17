@@ -1,10 +1,9 @@
-﻿using System.Text.RegularExpressions;
-using RolSRV8.Entities;
+﻿using RolSRV8.Entities;
 using RolSRV8.Repository;
 
 namespace RolSRV8.Services;
 
-public class RolService
+public class RolService : IRolService
 {
     private readonly RolRepository _repository;
 
@@ -13,57 +12,83 @@ public class RolService
         _repository = repository;
     }
 
-    public async Task Crear(Rol rol)
+    public async Task<IEnumerable<Rol>> ObtenerTodosAsync()
     {
-        if (string.IsNullOrWhiteSpace(rol.Nombre))
-            throw new Exception("Nombre requerido");
+        return await _repository.ObtenerTodosAsync();
+    }
 
-        if (string.IsNullOrWhiteSpace(rol.Pantallas))
-            throw new Exception("Pantallas requeridas");
+    public async Task<Rol?> ObtenerPorIdAsync(int id)
+    {
+        return await _repository.ObtenerPorIdAsync(id);
+    }
 
-        if (!Regex.IsMatch(
-            rol.Nombre,
-            @"^[a-zA-Z0-9\s]+$"))
+    public async Task<(bool ok, string error)> CrearAsync(
+        RolRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            return (false, "El nombre es requerido");
+
+        if (string.IsNullOrWhiteSpace(request.Pantallas))
+            return (false, "Las pantallas son requeridas");
+
+        var rol = new Rol
         {
-            throw new Exception(
-                "Nombre inválido");
+            Nombre = request.Nombre,
+            Pantallas = request.Pantallas
+        };
+
+        await _repository.CrearAsync(rol);
+
+        return (true, string.Empty);
+    }
+
+    public async Task<(bool ok, string error)> ActualizarAsync(
+        int id,
+        RolRequest request)
+    {
+        var rol = await _repository.ObtenerPorIdAsync(id);
+
+        if (rol == null)
+            return (false, "Rol no encontrado");
+
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            return (false, "El nombre es requerido");
+
+        if (string.IsNullOrWhiteSpace(request.Pantallas))
+            return (false, "Las pantallas son requeridas");
+
+        rol.Nombre = request.Nombre;
+        rol.Pantallas = request.Pantallas;
+
+        await _repository.ActualizarAsync(rol);
+
+        return (true, string.Empty);
+    }
+
+    public async Task<(bool ok, string error)> EliminarAsync(int id)
+    {
+        var rol =
+            await _repository.ObtenerPorIdAsync(id);
+
+        if (rol == null)
+        {
+            return (
+                false,
+                "Rol no encontrado");
         }
 
-        await _repository.Guardar(rol);
-    }
+        var cantidad =
+            await _repository.ContarUsuariosAsync(id);
 
-    public List<Rol> ObtenerTodos()
-    {
-        return _repository.ObtenerTodos();
-    }
+        if (cantidad > 0)
+        {
+            return (
+                false,
+                $"No se puede eliminar el rol porque está asignado a {cantidad} usuario(s)");
+        }
 
-    public Rol? ObtenerPorId(int id)
-    {
-        return _repository.ObtenerPorId(id);
-    }
 
-    public async Task Actualizar(
-        int id,
-        Rol nuevoRol)
-    {
-        var rol = _repository.ObtenerPorId(id);
 
-        if (rol == null)
-            throw new Exception("Rol no encontrado");
-
-        rol.Nombre = nuevoRol.Nombre;
-        rol.Pantallas = nuevoRol.Pantallas;
-
-        await _repository.Actualizar();
-    }
-
-    public async Task Eliminar(int id)
-    {
-        var rol = _repository.ObtenerPorId(id);
-
-        if (rol == null)
-            throw new Exception("Rol no encontrado");
-
-        await _repository.Eliminar(rol);
+        return (true, string.Empty);
     }
 }

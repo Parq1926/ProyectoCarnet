@@ -33,6 +33,7 @@ public class BitacoraRepository
         bitacora);
     }
 
+
     public async Task<IEnumerable<Bitacora>> ObtenerTodosAsync()
     {
         using var conn = _db.CreateConnection();
