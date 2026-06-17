@@ -15,6 +15,9 @@ builder.Services.AddScoped<UsuarioInstitucionRepository>();
 builder.Services.AddScoped<UsuarioTelefonoRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+
+
+
 builder.Services.AddScoped<BitacoraService>();
 
 //builder.Services.AddScoped<IEmailService, EmailService>();
@@ -24,6 +27,9 @@ builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<IInstitucionService, InstitucionService>();
 builder.Services.AddHttpClient<ICarreraService, CarreraService>();
 builder.Services.AddHttpClient<IAreaService, AreaService>();
+builder.Services.AddHttpClient<ITipoUsuarioService,TipoUsuarioService>();
+builder.Services.AddHttpClient<ITipoIdentificacionService,TipoIdentificacionService>();
+builder.Services.AddHttpClient<IAuthService, AuthService>();
 
 var app = builder.Build();
 

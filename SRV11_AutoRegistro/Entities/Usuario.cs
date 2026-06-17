@@ -27,7 +27,7 @@ public class Usuario
 
     public List<int> AreasAsociadas { get; set; } = [];
 
-    public string RolUsuario { get; set; } = string.Empty;
+    public int RolId { get; set; }
 
     public bool Confirmado { get; set; }
 

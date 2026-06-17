@@ -4,7 +4,7 @@ namespace SRV11_AutoRegistro.Services
 {
     public interface IUsuarioService
     {
-        Task<(bool ok, string error, string token)> RegistrarAsync(Usuario usuario);
+        Task<(bool ok, string error, Usuario? usuarioCreado)> RegistrarAsync(Usuario usuario);
 
         Task<(bool ok, string error)> ConfirmarCuentaAsync(string token);
     }

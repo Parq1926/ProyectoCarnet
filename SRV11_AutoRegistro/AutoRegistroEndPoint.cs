@@ -22,7 +22,21 @@ namespace SRV11_AutoRegistro
 
                 return Results.Ok(new
                 {
-                    mensaje = "Usuario registrado correctamente. Revise su correo para confirmar la cuenta."
+                    mensaje = "Usuario registrado correctamente. Revise su correo para confirmar la cuenta.",
+
+                    id = resultado.usuarioCreado!.ID,
+                    email = resultado.usuarioCreado.Email,
+                    nombreCompleto = resultado.usuarioCreado.NombreCompleto,
+                    numeroIdentificacion = resultado.usuarioCreado.NumeroIdentificacion,
+                    tipoUsuarioId = resultado.usuarioCreado.TipoUsuarioId,
+                    tipoIdentificacionId = resultado.usuarioCreado.TipoIdentificacionId,
+                    instituciones = resultado.usuarioCreado.Instituciones,
+                    carrerasAsociadas = resultado.usuarioCreado.CarrerasAsociadas,
+                    areasAsociadas = resultado.usuarioCreado.AreasAsociadas,
+                    telefonos = resultado.usuarioCreado.Telefonos,
+                    activo = resultado.usuarioCreado.Activo,
+                    confirmado = resultado.usuarioCreado.Confirmado,
+                    fechaCreacion = resultado.usuarioCreado.FechaCreacion
                 });
             });
 

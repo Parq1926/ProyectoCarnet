@@ -29,23 +29,21 @@ namespace SRV11_AutoRegistro.Repository
 
             var usuario = await conn.QueryFirstOrDefaultAsync<Usuario>(
                 @"
-        SELECT
-            ID,
-            EMAIL,
-            CONTRASENA,
-            TIPO_USUARIO_ID       AS TipoUsuarioId,
-            TIPO_IDENTIFICACION_ID AS TipoIdentificacionId,
-            NUMERO_IDENTIFICACION AS NumeroIdentificacion,
-            NOMBRE_COMPLETO       AS NombreCompleto,
-            ACTIVO,
-            FECHA_CREACION        AS FechaCreacion,
-            TELEFONOS_CONTACTO,
-            ROL_USUARIO           AS RolUsuario,
-            CONFIRMADO,
-            TOKEN_CONFIRMACION    AS TokenConfirmacion,
-            FECHA_EXPIRACION      AS FechaExpiracion
-        FROM USUARIO
-        WHERE TOKEN_CONFIRMACION = @token",
+                SELECT
+                    ID,
+                    EMAIL,
+                    CONTRASENA,
+                    TIPO_USUARIO_ID AS TipoUsuarioId,
+                    TIPO_IDENTIFICACION_ID AS TipoIdentificacionId,
+                    NUMERO_IDENTIFICACION AS NumeroIdentificacion,
+                    NOMBRE_COMPLETO AS NombreCompleto,
+                    ACTIVO,
+                    FECHA_CREACION AS FechaCreacion,
+                    CONFIRMADO,
+                    TOKEN_CONFIRMACION AS TokenConfirmacion,
+                    FECHA_EXPIRACION AS FechaExpiracion
+                FROM USUARIO
+                WHERE TOKEN_CONFIRMACION = @token",
                 new { token });
 
             Console.WriteLine(
@@ -70,8 +68,7 @@ namespace SRV11_AutoRegistro.Repository
                 NombreCompleto = usuario.NombreCompleto,
                 Activo = usuario.Activo,
                 FechaCreacion = usuario.FechaCreacion,
-                TelefonosContacto = string.Join(",", usuario.Telefonos ?? new List<string>()),
-                RolUsuario = usuario.RolUsuario,
+                RolId = usuario.RolId,
                 Confirmado = usuario.Confirmado,
                 TokenConfirmacion = usuario.TokenConfirmacion,
                 FechaExpiracion = usuario.FechaExpiracion
@@ -89,8 +86,7 @@ namespace SRV11_AutoRegistro.Repository
         NOMBRE_COMPLETO,
         ACTIVO,
         FECHA_CREACION,
-        TELEFONOS_CONTACTO,
-        ROL_USUARIO,
+        ROL_ID,
         CONFIRMADO,
         TOKEN_CONFIRMACION,
         FECHA_EXPIRACION
@@ -106,8 +102,7 @@ namespace SRV11_AutoRegistro.Repository
         @NombreCompleto,
         @Activo,
         @FechaCreacion,
-        @TelefonosContacto,
-        @RolUsuario,
+        @RolId,
         @Confirmado,
         @TokenConfirmacion,
         @FechaExpiracion

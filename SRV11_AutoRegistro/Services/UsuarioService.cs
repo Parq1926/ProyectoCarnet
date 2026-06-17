@@ -18,6 +18,8 @@ namespace SRV11_AutoRegistro.Services
         private readonly UsuarioTelefonoRepository _telefonoRepository;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly ITipoUsuarioService _tipoUsuarioService;
+        private readonly ITipoIdentificacionService _tipoIdentificacionService;
 
 
         public UsuarioService(
@@ -29,8 +31,10 @@ namespace SRV11_AutoRegistro.Services
             ICarreraService carreraService,
             IAreaService areaService,
             UsuarioTelefonoRepository telefonoRepository,
-                IConfiguration configuration,
-                    IEmailService emailService)
+            IConfiguration configuration,
+            IEmailService emailService,
+            ITipoUsuarioService tipoUsuarioService,
+            ITipoIdentificacionService tipoIdentificacionService)
         {
             _repository = repository;
             _carreraRepository = carreraRepository;
@@ -43,34 +47,60 @@ namespace SRV11_AutoRegistro.Services
             _telefonoRepository = telefonoRepository;
             _configuration = configuration;
             _emailService = emailService;
+            _tipoUsuarioService = tipoUsuarioService;
+            _tipoIdentificacionService = tipoIdentificacionService;
         }
 
-        public async Task<(bool ok, string error, string token)> RegistrarAsync(Usuario usuario)
+        public async Task<(bool ok, string error, Usuario? usuarioCreado)> RegistrarAsync(Usuario usuario)
         {
             if (usuario.TipoUsuarioId <= 0)
-                return (false, "Debe indicar un tipo de usuario", "");
+                return (false, "Debe indicar un tipo de usuario", null);
+
+            var tipoUsuario =
+                await _tipoUsuarioService.GetById(usuario.TipoUsuarioId);
+
+            if (tipoUsuario is null)
+            {
+                return (
+                    false,
+                    $"El tipo de usuario {usuario.TipoUsuarioId} no existe",
+                    null
+                );
+            }
 
             if (usuario.TipoIdentificacionId <= 0)
-                return (false, "Debe indicar un tipo de identificación", "");
+                return (false, "Debe indicar un tipo de identificación", null);
+
+            var tipoIdentificacion =
+                await _tipoIdentificacionService.GetById(usuario.TipoIdentificacionId);
+
+            if (tipoIdentificacion is null)
+            {
+                return (
+                    false,
+                    $"El tipo de identificación {usuario.TipoIdentificacionId} no existe",
+                    null
+                );
+            }
 
             if (string.IsNullOrWhiteSpace(usuario.NumeroIdentificacion))
-                return (false, "La identificación es requerida", "");
+                return (false, "La identificación es requerida", null);
 
             if (string.IsNullOrWhiteSpace(usuario.Email))
-                return (false, "El email es requerido", "");
+                return (false, "El email es requerido", null);
 
             if (!Regex.IsMatch(
                 usuario.Email,
                 @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
             {
-                return (false, "Formato de email inválido", "");
+                return (false, "Formato de email inválido", null);
             }
 
             if (string.IsNullOrWhiteSpace(usuario.NombreCompleto))
-                return (false, "El nombre completo es requerido", "");
+                return (false, "El nombre completo es requerido", null);
 
             if (string.IsNullOrWhiteSpace(usuario.Contrasena))
-                return (false, "La contraseña es requerida", "");
+                return (false, "La contraseña es requerida", null);
 
             // Validación estudiante
             if (usuario.TipoUsuarioId == 1)
@@ -80,7 +110,7 @@ namespace SRV11_AutoRegistro.Services
                 {
                     return (false,
                         "El estudiante debe tener al menos una carrera",
-                        "");
+                        null);
                 }
             }
 
@@ -92,21 +122,21 @@ namespace SRV11_AutoRegistro.Services
                 {
                     return (false,
                         "El funcionario debe tener al menos un área",
-                        "");
+                        null);
                 }
             }
 
             var existe = await _repository.GetByEmailAsync(usuario.Email);
 
             if (existe is not null)
-                return (false, "Ya existe un usuario con ese correo", "");
+                return (false, "Ya existe un usuario con ese correo", null);
 
 
             if (!usuario.Instituciones.Any())
             {
                 return (false,
                     "Debe seleccionar al menos una institución",
-                    "");
+                    null);
             }
 
             var dominioCorreo = usuario.Email
@@ -127,7 +157,7 @@ namespace SRV11_AutoRegistro.Services
                     return (
                         false,
                         $"La institución {institucionId} no existe",
-                        ""
+                        null
                     );
                 }
 
@@ -146,7 +176,7 @@ namespace SRV11_AutoRegistro.Services
                 return (
                     false,
                     "El dominio del correo no pertenece a ninguna institución seleccionada",
-                    ""
+                    null
                 );
             }
 
@@ -162,7 +192,7 @@ namespace SRV11_AutoRegistro.Services
                         return (
                             false,
                             $"La carrera {carreraId} no existe",
-                            ""
+                            null
                         );
                     }
                 }
@@ -180,7 +210,7 @@ namespace SRV11_AutoRegistro.Services
                         return (
                             false,
                             $"El área {areaId} no existe",
-                            ""
+                            null
                         );
                     }
                 }
@@ -202,6 +232,8 @@ namespace SRV11_AutoRegistro.Services
                 DateTime.Now.AddMinutes(minutosExpiracion);
 
             var usuarioId = await _repository.CreateAsync(usuario);
+            usuario.ID = usuarioId;
+
 
             var enlaceConfirmacion =
                 $"http://localhost:5221/autoregistro/confirmar/{token}";
@@ -250,7 +282,7 @@ namespace SRV11_AutoRegistro.Services
                 }
             }
 
-            return (true, string.Empty, token);
+            return (true, string.Empty, usuario);
         }
 
 
