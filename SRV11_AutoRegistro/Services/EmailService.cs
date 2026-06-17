@@ -1,54 +1,56 @@
-﻿using System.Net;
-using System.Net.Mail;
+﻿using MailKit.Net.Smtp;
+using MimeKit;
 
-namespace SRV11_AutoRegistro.Services;
-
-public class EmailService : IEmailService
+namespace SRV11_AutoRegistro.Services
 {
-    private readonly IConfiguration _configuration;
-
-    public EmailService(IConfiguration configuration)
+    public class EmailService : IEmailService
     {
-        _configuration = configuration;
-    }
+        private readonly IConfiguration _configuration;
 
-    public async Task EnviarConfirmacion(
-        string correo,
-        string token)
-    {
-        var smtp =
-            _configuration["EmailSettings:SmtpServer"];
-
-        var port =
-            int.Parse(
-                _configuration["EmailSettings:Port"]!);
-
-        var sender =
-            _configuration["EmailSettings:SenderEmail"];
-
-        var password =
-            _configuration["EmailSettings:Password"];
-
-        var link =
-            $"http://localhost:5000/autoregistro/confirmar/{token}";
-
-        using var client = new SmtpClient(smtp, port)
+        public EmailService(IConfiguration configuration)
         {
-            EnableSsl = true,
-            Credentials = new NetworkCredential(
-                sender,
-                password)
-        };
+            _configuration = configuration;
+        }
 
-        var mail = new MailMessage(
-            sender!,
-            correo);
+        public async Task EnviarCorreoConfirmacionAsync(
+            string destino,
+            string enlaceConfirmacion)
+        {
+            var mensaje = new MimeMessage();
 
-        mail.Subject = "Confirmación de cuenta";
+            mensaje.From.Add(
+                MailboxAddress.Parse(
+                    _configuration["Email:SmtpUser"]));
 
-        mail.Body =
-            $"Confirme su cuenta usando este enlace:\n\n{link}";
+            mensaje.To.Add(
+                MailboxAddress.Parse(destino));
 
-        await client.SendMailAsync(mail);
+            mensaje.Subject = "Confirmación de cuenta";
+
+            mensaje.Body = new TextPart("html")
+            {
+                Text =
+                    $@"<h2>Confirmación de cuenta</h2>
+                       <p>Para activar la cuenta haga clic:</p>
+                       <a href='{enlaceConfirmacion}'>
+                           Confirmar cuenta
+                       </a>"
+            };
+
+            using var smtp = new SmtpClient();
+
+            await smtp.ConnectAsync(
+                _configuration["Email:SmtpServer"],
+                int.Parse(_configuration["Email:SmtpPort"]!),
+                MailKit.Security.SecureSocketOptions.StartTls);
+
+            await smtp.AuthenticateAsync(
+                _configuration["Email:SmtpUser"],
+                _configuration["Email:SmtpPassword"]);
+
+            await smtp.SendAsync(mensaje);
+
+            await smtp.DisconnectAsync(true);
+        }
     }
 }

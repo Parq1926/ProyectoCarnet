@@ -27,11 +27,24 @@ public static class AreaEndpoint
         group.MapPost("/", async (CreateAreaRequest request, IAreaService service, IBitacoraService bitacora) =>
         {
             var result = await service.Create(request);
+
             if (result.success)
             {
                 await bitacora.Registrar("Administrador del Sistema", $"Creó el area {request.Nombre}");
-                return Results.Created($"/areas/{result.id}", new { id = result.id, message = result.message });
+
+                return Results.Created($"/areas/{result.id}", new
+                {
+                    message = result.message,
+                    area = new
+                    {
+                        id = result.id,
+                        nombre = request.Nombre,
+                        institucionID = request.InstitucionID,
+                        institucionNombre = request.InstitucionNombre
+                    }
+                });
             }
+
             return Results.BadRequest(new { error = result.message });
         });
 
@@ -43,25 +56,58 @@ public static class AreaEndpoint
             }
 
             var result = await service.Update(request);
+
             if (result.success)
             {
                 await bitacora.Registrar("Administrador del Sistema", $"Modificó el area {request.Nombre}");
-                return Results.Ok(new { message = result.message });
+
+                return Results.Ok(new
+                {
+                    message = result.message,
+                    area = new
+                    {
+                        id = request.ID,
+                        nombre = request.Nombre,
+                        institucionID = request.InstitucionID,
+                        institucionNombre = request.InstitucionNombre
+                    }
+                });
             }
+
             return Results.BadRequest(new { error = result.message });
         });
 
         group.MapDelete("/{id}", async (int id, IAreaService service, IBitacoraService bitacora) =>
         {
             var area = await service.GetById(id);
-            var nombreArea = area?.Nombre ?? "Desconocida";
+
+            if (area == null)
+            {
+                return Results.NotFound(new
+                {
+                    error = $"Area con ID {id} no encontrada"
+                });
+            }
 
             var result = await service.Delete(id);
+
             if (result.success)
             {
-                await bitacora.Registrar("Administrador del Sistema", $"Eliminó el area {nombreArea}");
-                return Results.Ok(new { message = result.message });
+                await bitacora.Registrar("Administrador del Sistema", $"Eliminó el area {area.Nombre}");
+
+                return Results.Ok(new
+                {
+                    message = result.message,
+                    area = new
+                    {
+                        id = area.ID,
+                        nombre = area.Nombre,
+                        institucionID = area.InstitucionID,
+                        institucionNombre = area.InstitucionNombre
+                    }
+                });
             }
+
             return Results.BadRequest(new { error = result.message });
         });
     }

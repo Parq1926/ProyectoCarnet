@@ -27,11 +27,27 @@ public static class CarreraEndpoint
         group.MapPost("/", async (CreateCarreraRequest request, ICarreraService service, IBitacoraService bitacora) =>
         {
             var result = await service.Create(request);
+
             if (result.success)
             {
                 await bitacora.Registrar("Administrador del Sistema", $"Creó la carrera {request.Nombre}");
-                return Results.Created($"/carreras/{result.id}", new { id = result.id, message = result.message });
+
+                return Results.Created($"/carreras/{result.id}", new
+                {
+                    message = result.message,
+                    carrera = new
+                    {
+                        id = result.id,
+                        nombre = request.Nombre,
+                        director = request.Director,
+                        email = request.Email,
+                        telefono = request.Telefono,
+                        institucionID = request.InstitucionID,
+                        institucionNombre = request.InstitucionNombre
+                    }
+                });
             }
+
             return Results.BadRequest(new { error = result.message });
         });
 
@@ -43,25 +59,64 @@ public static class CarreraEndpoint
             }
 
             var result = await service.Update(request);
+
             if (result.success)
             {
                 await bitacora.Registrar("Administrador del Sistema", $"Modificó la carrera {request.Nombre}");
-                return Results.Ok(new { message = result.message });
+
+                return Results.Ok(new
+                {
+                    message = result.message,
+                    carrera = new
+                    {
+                        id = request.ID,
+                        nombre = request.Nombre,
+                        director = request.Director,
+                        email = request.Email,
+                        telefono = request.Telefono,
+                        institucionID = request.InstitucionID,
+                        institucionNombre = request.InstitucionNombre
+                    }
+                });
             }
+
             return Results.BadRequest(new { error = result.message });
         });
 
         group.MapDelete("/{id}", async (int id, ICarreraService service, IBitacoraService bitacora) =>
         {
             var carrera = await service.GetById(id);
-            var nombreCarrera = carrera?.Nombre ?? "Desconocida";
+
+            if (carrera == null)
+            {
+                return Results.NotFound(new
+                {
+                    error = $"Carrera con ID {id} no encontrada"
+                });
+            }
 
             var result = await service.Delete(id);
+
             if (result.success)
             {
-                await bitacora.Registrar("Administrador del Sistema", $"Eliminó la carrera {nombreCarrera}");
-                return Results.Ok(new { message = result.message });
+                await bitacora.Registrar("Administrador del Sistema", $"Eliminó la carrera {carrera.Nombre}");
+
+                return Results.Ok(new
+                {
+                    message = result.message,
+                    carrera = new
+                    {
+                        id = carrera.ID,
+                        nombre = carrera.Nombre,
+                        director = carrera.Director,
+                        email = carrera.Email,
+                        telefono = carrera.Telefono,
+                        institucionID = carrera.InstitucionID,
+                        institucionNombre = carrera.InstitucionNombre
+                    }
+                });
             }
+
             return Results.BadRequest(new { error = result.message });
         });
     }

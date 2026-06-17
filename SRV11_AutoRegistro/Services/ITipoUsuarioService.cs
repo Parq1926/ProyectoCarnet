@@ -1,0 +1,76 @@
+﻿using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+
+namespace SRV11_AutoRegistro.Services;
+
+public interface ITipoUsuarioService
+{
+    Task<TipoUsuarioDto?> GetById(int id);
+}
+
+public class TipoUsuarioService : ITipoUsuarioService
+{
+    private readonly HttpClient _httpClient;
+    private readonly IAuthService _authService;
+
+    public TipoUsuarioService(
+        HttpClient httpClient,
+        IAuthService authService)
+    {
+        _httpClient = httpClient;
+        _authService = authService;
+    }
+
+    public async Task<TipoUsuarioDto?> GetById(int id)
+    {
+        try
+        {
+            var token = await _authService.ObtenerTokenAsync();
+
+            Console.WriteLine($"TOKEN: {token}");
+
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    token);
+
+            var response =
+                await _httpClient.GetAsync(
+                    $"http://localhost:5017/api/TipoUsuario/{id}");
+
+            Console.WriteLine($"STATUS: {response.StatusCode}");
+
+            var contenido =
+                await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine($"CONTENIDO: {contenido}");
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            using var document =
+                JsonDocument.Parse(contenido);
+
+            var data =
+                document.RootElement.GetProperty("data");
+
+            return new TipoUsuarioDto
+            {
+                ID = data.GetProperty("id").GetInt32(),
+                Nombre = data.GetProperty("nombre").GetString() ?? ""
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            return null;
+        }
+    }
+}
+
+public class TipoUsuarioDto
+{
+    public int ID { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+}

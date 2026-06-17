@@ -1,123 +1,128 @@
 ﻿using Dapper;
 using SRV11_AutoRegistro.Entities;
-using SRV2_Instituciones.Repository;
 
-namespace SRV11_AutoRegistro.Repository;
-
-public class UsuarioRepository : IUsuarioRepository
+namespace SRV11_AutoRegistro.Repository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
-
-    public UsuarioRepository(IDbConnectionFactory connectionFactory)
+    public class UsuarioRepository
     {
-        _connectionFactory = connectionFactory;
-    }
+        private readonly IDbConnectionFactory _db;
 
-    public async Task<int> Create(Usuario usuario)
-    {
-        using var connection = _connectionFactory.CreateConnection();
+        public UsuarioRepository(IDbConnectionFactory db)
+        {
+            _db = db;
+        }
 
-        const string sql = @"
-        INSERT INTO Usuario
-        (
-            Email,
-            TipoIdentificacionID,
-            Identificacion,
-            NombreCompleto,
-            PasswordHash,
-            TipoUsuarioID,
-            RolID,
-            Confirmado,
-            TokenConfirmacion,
-            FechaExpiracion,
-            Activo,
-            FechaCreacion
-        )
-        VALUES
-        (
-            @Email,
-            @TipoIdentificacionID,
-            @Identificacion,
-            @NombreCompleto,
-            @PasswordHash,
-            @TipoUsuarioID,
-            @RolID,
-            @Confirmado,
-            @TokenConfirmacion,
-            @FechaExpiracion,
-            1,
-            GETDATE()
-        );
+        public async Task<Usuario?> GetByEmailAsync(string email)
+        {
+            using var conn = _db.CreateConnection();
 
-        SELECT CAST(SCOPE_IDENTITY() as int)";
+            return await conn.QueryFirstOrDefaultAsync<Usuario>(
+                @"SELECT *
+                  FROM USUARIO
+                  WHERE EMAIL = @email",
+                new { email });
+        }
 
-        return await connection.QuerySingleAsync<int>(sql, usuario);
-    }
+        public async Task<Usuario?> GetByTokenAsync(string token)
+        {
+            using var conn = _db.CreateConnection();
 
-    public async Task<Usuario?> GetByEmail(string email)
-    {
-        using var connection = _connectionFactory.CreateConnection();
+            var usuario = await conn.QueryFirstOrDefaultAsync<Usuario>(
+                @"
+                SELECT
+                    ID,
+                    EMAIL,
+                    CONTRASENA,
+                    TIPO_USUARIO_ID AS TipoUsuarioId,
+                    TIPO_IDENTIFICACION_ID AS TipoIdentificacionId,
+                    NUMERO_IDENTIFICACION AS NumeroIdentificacion,
+                    NOMBRE_COMPLETO AS NombreCompleto,
+                    ACTIVO,
+                    FECHA_CREACION AS FechaCreacion,
+                    CONFIRMADO,
+                    TOKEN_CONFIRMACION AS TokenConfirmacion,
+                    FECHA_EXPIRACION AS FechaExpiracion
+                FROM USUARIO
+                WHERE TOKEN_CONFIRMACION = @token",
+                new { token });
 
-        const string sql = @"
-        SELECT *
-        FROM Usuario
-        WHERE Email = @Email
-        AND Activo = 1";
+            Console.WriteLine(
+                usuario == null
+                    ? "NO SE ENCONTRO USUARIO"
+                    : $"FECHA = {usuario.FechaExpiracion}");
 
-        return await connection.QueryFirstOrDefaultAsync<Usuario>(
-            sql,
-            new { Email = email });
-    }
+            return usuario;
+        }
 
-    public async Task<Usuario?> GetByToken(string token)
-    {
-        using var connection = _connectionFactory.CreateConnection();
+        public async Task<int> CreateAsync(Usuario usuario)
+        {
+            using var conn = _db.CreateConnection();
 
-        const string sql = @"
-        SELECT *
-        FROM Usuario
-        WHERE TokenConfirmacion = @Token
-        AND Activo = 1";
+            var parametros = new
+            {
+                Email = usuario.Email,
+                Contrasena = usuario.Contrasena,
+                TipoUsuarioId = usuario.TipoUsuarioId,
+                TipoIdentificacionId = usuario.TipoIdentificacionId,
+                NumeroIdentificacion = usuario.NumeroIdentificacion,
+                NombreCompleto = usuario.NombreCompleto,
+                Activo = usuario.Activo,
+                FechaCreacion = usuario.FechaCreacion,
+                RolId = usuario.RolId,
+                Confirmado = usuario.Confirmado,
+                TokenConfirmacion = usuario.TokenConfirmacion,
+                FechaExpiracion = usuario.FechaExpiracion
+            };
 
-        return await connection.QueryFirstOrDefaultAsync<Usuario>(
-            sql,
-            new { Token = token });
-    }
+            return await conn.ExecuteScalarAsync<int>(
+            @"
+    INSERT INTO USUARIO
+    (
+        EMAIL,
+        CONTRASENA,
+        TIPO_USUARIO_ID,
+        TIPO_IDENTIFICACION_ID,
+        NUMERO_IDENTIFICACION,
+        NOMBRE_COMPLETO,
+        ACTIVO,
+        FECHA_CREACION,
+        ROL_ID,
+        CONFIRMADO,
+        TOKEN_CONFIRMACION,
+        FECHA_EXPIRACION
+    )
+    OUTPUT INSERTED.ID
+    VALUES
+    (
+        @Email,
+        @Contrasena,
+        @TipoUsuarioId,
+        @TipoIdentificacionId,
+        @NumeroIdentificacion,
+        @NombreCompleto,
+        @Activo,
+        @FechaCreacion,
+        @RolId,
+        @Confirmado,
+        @TokenConfirmacion,
+        @FechaExpiracion
+    )",
+            parametros);
+        }
 
-    public async Task<bool> ConfirmarCuenta(string token)
-    {
-        using var connection = _connectionFactory.CreateConnection();
+        public async Task<int> ConfirmarCuentaAsync(int id)
+        {
+            using var conn = _db.CreateConnection();
 
-        const string sql = @"
-        UPDATE Usuario
-        SET Confirmado = 1,
-            TokenConfirmacion = NULL,
-            FechaExpiracion = NULL,
-            FechaModificacion = GETDATE()
-        WHERE TokenConfirmacion = @Token";
-
-        var rows = await connection.ExecuteAsync(
-            sql,
-            new { Token = token });
-
-        return rows > 0;
-    }
-
-
-    public async Task<bool> ExistsByEmail(string email)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-
-        const string sql = @"
-        SELECT COUNT(1)
-        FROM Usuario
-        WHERE Email = @Email
-        AND Activo = 1";
-
-        var count = await connection.ExecuteScalarAsync<int>(
-            sql,
-            new { Email = email });
-
-        return count > 0;
+            return await conn.ExecuteAsync(
+                @"
+                UPDATE USUARIO
+                SET
+                    CONFIRMADO = 1,
+                    TOKEN_CONFIRMACION = NULL,
+                    FECHA_EXPIRACION = NULL
+                WHERE ID = @id",
+                new { id });
+        }
     }
 }

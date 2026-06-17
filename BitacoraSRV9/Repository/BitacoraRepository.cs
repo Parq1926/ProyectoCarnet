@@ -1,27 +1,50 @@
-﻿using BitacoraSRV9.Data;
+﻿using Dapper;
 using BitacoraSRV9.Entities;
 
 namespace BitacoraSRV9.Repository;
 
 public class BitacoraRepository
 {
-    private readonly BitacoraDbContext _context;
+    private readonly IDbConnectionFactory _db;
 
-    public BitacoraRepository(BitacoraDbContext context)
+    public BitacoraRepository(IDbConnectionFactory db)
     {
-        _context = context;
+        _db = db;
     }
 
-    public async Task Guardar(Bitacora bitacora)
+    public async Task<int> GuardarAsync(Bitacora bitacora)
     {
-        _context.Bitacoras.Add(bitacora);
-        await _context.SaveChangesAsync();
+        using var conn = _db.CreateConnection();
+
+        return await conn.ExecuteAsync(
+        @"
+        INSERT INTO BITACORA
+        (
+            USUARIO,
+            ACCION,
+            FECHA
+        )
+        VALUES
+        (
+            @Usuario,
+            @Accion,
+            @Fecha
+        )",
+        bitacora);
     }
 
-    public List<Bitacora> ObtenerTodos()
+    public async Task<IEnumerable<Bitacora>> ObtenerTodosAsync()
     {
-        return _context.Bitacoras
-            .OrderByDescending(x => x.Fecha)
-            .ToList();
+        using var conn = _db.CreateConnection();
+
+        return await conn.QueryAsync<Bitacora>(
+        @"
+        SELECT
+            ID AS Id,
+            USUARIO AS Usuario,
+            ACCION AS Accion,
+            FECHA AS Fecha
+        FROM BITACORA
+        ORDER BY FECHA DESC");
     }
 }

@@ -3,7 +3,7 @@ using BitacoraSRV9.Repository;
 
 namespace BitacoraSRV9.Services;
 
-public class BitacoraService
+public class BitacoraService : IBitacoraService
 {
     private readonly BitacoraRepository _repository;
 
@@ -12,20 +12,30 @@ public class BitacoraService
         _repository = repository;
     }
 
-    public async Task Registrar(string usuario, string accion)
+    public async Task<(bool ok, string error)>
+        RegistrarAsync(BitacoraRequest request)
     {
-        Bitacora bitacora = new Bitacora
+        if (string.IsNullOrWhiteSpace(request.Usuario))
+            return (false, "El usuario es requerido");
+
+        if (string.IsNullOrWhiteSpace(request.Accion))
+            return (false, "La acción es requerida");
+
+        var bitacora = new Bitacora
         {
-            Usuario = usuario,
-            Accion = accion,
+            Usuario = request.Usuario,
+            Accion = request.Accion,
             Fecha = DateTime.Now
         };
 
-        await _repository.Guardar(bitacora);
+        await _repository.GuardarAsync(bitacora);
+
+        return (true, string.Empty);
     }
 
-    public List<Bitacora> ObtenerTodos()
+    public async Task<IEnumerable<Bitacora>>
+        ObtenerTodosAsync()
     {
-        return _repository.ObtenerTodos();
+        return await _repository.ObtenerTodosAsync();
     }
 }

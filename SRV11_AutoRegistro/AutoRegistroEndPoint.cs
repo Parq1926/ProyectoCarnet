@@ -1,65 +1,64 @@
-﻿using SRV11_AutoRegistro.Services;
+﻿using SRV11_AutoRegistro.Entities;
+using SRV11_AutoRegistro.Services;
 
-namespace SRV11_Autoregistro;
-
-public static class AutoregistroEndpoint
+namespace SRV11_AutoRegistro
 {
-    public static void MapAutoregistroEndpoints(this WebApplication app)
+    public static class AutoRegistroEndpoints
     {
-        var group = app.MapGroup("/autoregistro");
-
-        group.MapPost("/", async (
-            CreateUsuarioRequest request,
-            IUsuarioService service,
-            BitacoraService bitacora) =>
+        public static void MapAutoRegistroEndpoints(this WebApplication app)
         {
-            var result = await service.Registrar(request);
-
-            if (result.success)
+            app.MapPost("/autoregistro",
+            async (
+                Usuario usuario,
+                IUsuarioService service) =>
             {
-                await bitacora.Registrar(
-                    "Autoregistro",
-                    $"Se registró el usuario {request.Email}");
+                var resultado = await service.RegistrarAsync(usuario);
 
-                return Results.Created(
-                    "/autoregistro",
-                    new
+                if (!resultado.ok)
+                    return Results.BadRequest(new
                     {
-                        message = result.message,
-                        token = result.token
+                        mensaje = resultado.error
                     });
-            }
-
-            return Results.BadRequest(new
-            {
-                error = result.message
-            });
-        });
-
-        group.MapGet("/confirmar/{token}", async (
-            string token,
-            IUsuarioService service,
-            BitacoraService bitacora) =>
-        {
-            var result =
-                await service.ConfirmarCuenta(token);
-
-            if (result.success)
-            {
-                await bitacora.Registrar(
-                    "Autoregistro",
-                    "Cuenta confirmada");
 
                 return Results.Ok(new
                 {
-                    message = result.message
-                });
-            }
+                    mensaje = "Usuario registrado correctamente. Revise su correo para confirmar la cuenta.",
 
-            return Results.BadRequest(new
-            {
-                error = result.message
+                    id = resultado.usuarioCreado!.ID,
+                    email = resultado.usuarioCreado.Email,
+                    nombreCompleto = resultado.usuarioCreado.NombreCompleto,
+                    numeroIdentificacion = resultado.usuarioCreado.NumeroIdentificacion,
+                    tipoUsuarioId = resultado.usuarioCreado.TipoUsuarioId,
+                    tipoIdentificacionId = resultado.usuarioCreado.TipoIdentificacionId,
+                    instituciones = resultado.usuarioCreado.Instituciones,
+                    carrerasAsociadas = resultado.usuarioCreado.CarrerasAsociadas,
+                    areasAsociadas = resultado.usuarioCreado.AreasAsociadas,
+                    telefonos = resultado.usuarioCreado.Telefonos,
+                    activo = resultado.usuarioCreado.Activo,
+                    confirmado = resultado.usuarioCreado.Confirmado,
+                    fechaCreacion = resultado.usuarioCreado.FechaCreacion
+                });
             });
-        });
+
+            app.MapGet("/autoregistro/confirmar/{token}",
+            async (
+                string token,
+                IUsuarioService service) =>
+            {
+                var resultado =
+                    await service.ConfirmarCuentaAsync(token);
+
+                if (!resultado.ok)
+                    return Results.BadRequest(new
+                    {
+                        mensaje = resultado.error
+                    });
+
+                return Results.Ok(new
+                {
+                    mensaje = "Cuenta confirmada correctamente"
+                });
+            });
+        }
     }
 }
