@@ -4,11 +4,8 @@ namespace SRV13_Fotografia.Entities
 {
     public class FotografiaUsuario
     {
-        public int Id { get; set; }
         public string UsuarioIdentificacion { get; set; } = null!;
         public string FotografiaBase64 { get; set; } = null!;
-        public DateTime FechaCreacion { get; set; }
-        public DateTime? FechaModificacion { get; set; }
     }
 
     public class ActualizarFotografiaRequest

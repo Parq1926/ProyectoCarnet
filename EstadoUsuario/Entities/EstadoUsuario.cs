@@ -25,4 +25,13 @@ namespace SRV12_EstadoUsuario.Entities
         [Required(AllowEmptyStrings = false, ErrorMessage = "El código del estado es requerido")]
         public string CodigoEstado { get; set; } = null!;
     }
+
+    // Datos del estado actualizado que se devuelven al cliente.
+    public class EstadoUsuarioResponse
+    {
+        public string UsuarioIdentificacion { get; set; } = null!;
+        public string CodigoEstado { get; set; } = null!;
+        public string Descripcion { get; set; } = null!;
+        public DateTime FechaModificacion { get; set; }
+    }
 }

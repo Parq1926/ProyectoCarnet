@@ -1,7 +1,10 @@
+using SRV12_EstadoUsuario.Entities;
+
 namespace SRV12_EstadoUsuario.Services
 {
     public interface IEstadoUsuarioService
     {
-        Task<int> CambiarEstadoAsync(string identificacion, string codigoEstado);
+        // status: 200 ok | 404 estado inexistente | 500 fallo
+        Task<(EstadoUsuarioResponse? data, int status)> CambiarEstadoAsync(string identificacion, string codigoEstado);
     }
 }
