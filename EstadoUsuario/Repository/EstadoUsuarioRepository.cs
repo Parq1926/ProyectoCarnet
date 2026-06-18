@@ -27,8 +27,8 @@ namespace SRV12_EstadoUsuario.Repository
         {
             using var conn = _db.CreateConnection();
             return await conn.QueryFirstOrDefaultAsync<UsuarioEstado>(
-                @"SELECT ID AS Id, USUARIO_IDENTIFICACION AS UsuarioIdentificacion, 
-                  ESTADOUSUARIO_ID AS EstadoUsuarioId, FECHA_MODIFICACION AS FechaModificacion 
+                @"SELECT ID AS Id, USUARIO_IDENTIFICACION AS UsuarioIdentificacion,
+                  ESTADOUSUARIO_ID AS EstadoUsuarioId
                   FROM USUARIOESTADO WHERE USUARIO_IDENTIFICACION = @identificacion",
                 new { identificacion });
         }
@@ -42,8 +42,8 @@ namespace SRV12_EstadoUsuario.Repository
 
             if (exists.HasValue)
                 return await conn.ExecuteAsync(
-                    @"UPDATE USUARIOESTADO SET ESTADOUSUARIO_ID = @estadoId, 
-                      FECHA_MODIFICACION = GETDATE() WHERE USUARIO_IDENTIFICACION = @identificacion",
+                    @"UPDATE USUARIOESTADO SET ESTADOUSUARIO_ID = @estadoId
+                      WHERE USUARIO_IDENTIFICACION = @identificacion",
                     new { estadoId, identificacion });
 
             return await conn.ExecuteAsync(

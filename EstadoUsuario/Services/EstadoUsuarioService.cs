@@ -16,13 +16,11 @@ namespace SRV12_EstadoUsuario.Services
             var rows = await _repository.UpsertEstadoUsuarioAsync(identificacion, estado.Id);
             if (rows <= 0) return (null, 500);
 
-            var actual = await _repository.GetEstadoUsuarioAsync(identificacion);
             var data = new EstadoUsuarioResponse
             {
                 UsuarioIdentificacion = identificacion,
                 CodigoEstado = estado.Codigo,
-                Descripcion = estado.Descripcion,
-                FechaModificacion = actual?.FechaModificacion ?? DateTime.Now
+                Descripcion = estado.Descripcion
             };
             return (data, 200);
         }

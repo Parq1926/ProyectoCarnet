@@ -14,7 +14,6 @@ namespace SRV12_EstadoUsuario.Entities
         public int Id { get; set; }
         public string UsuarioIdentificacion { get; set; } = null!;
         public int EstadoUsuarioId { get; set; }
-        public DateTime FechaModificacion { get; set; }
     }
 
     public class CambioEstadoRequest
@@ -32,6 +31,5 @@ namespace SRV12_EstadoUsuario.Entities
         public string UsuarioIdentificacion { get; set; } = null!;
         public string CodigoEstado { get; set; } = null!;
         public string Descripcion { get; set; } = null!;
-        public DateTime FechaModificacion { get; set; }
     }
 }
