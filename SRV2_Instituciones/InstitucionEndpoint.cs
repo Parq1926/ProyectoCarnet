@@ -1,4 +1,5 @@
 ﻿using SRV2_Instituciones.Services;
+using SRV2_Instituciones.Auth;
 
 namespace SRV2_Instituciones;
 
@@ -8,29 +9,71 @@ public static class InstitucionEndpoint
     {
         var group = app.MapGroup("/institucion");
 
-        group.MapGet("/", async (IInstitucionService service) =>
+        group.MapGet("/", async (
+            HttpContext context,
+            IInstitucionService service) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             var instituciones = await service.GetAll();
             return Results.Ok(instituciones);
         });
 
-        group.MapGet("/{id}", async (int id, IInstitucionService service) =>
+        group.MapGet("/{id}", async (
+            HttpContext context,
+            int id,
+            IInstitucionService service) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             var institucion = await service.GetById(id);
+
             if (institucion != null)
-            {
                 return Results.Ok(institucion);
-            }
+
             return Results.NotFound($"Institucion con ID {id} no encontrada");
         });
 
-        group.MapPost("/", async (CreateInstitucionRequest request, IInstitucionService service, IBitacoraService bitacora) =>
+        group.MapPost("/", async (
+            HttpContext context,
+            CreateInstitucionRequest request,
+            IInstitucionService service,
+            IBitacoraClient bitacoraClient) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             var result = await service.Create(request);
 
             if (result.success)
             {
-                await bitacora.Registrar("Administrador del Sistema", $"Creó la institucion {request.Nombre}");
+                await bitacoraClient.RegistrarAsync(
+                    "Administrador del Sistema",
+                    $"Creó la institucion {request.Nombre}",
+                    token);
 
                 return Results.Created($"/institucion/{result.id}", new
                 {
@@ -49,8 +92,23 @@ public static class InstitucionEndpoint
             return Results.BadRequest(new { error = result.message });
         });
 
-        group.MapPut("/{id}", async (int id, UpdateInstitucionRequest request, IInstitucionService service, IBitacoraService bitacora) =>
+        group.MapPut("/{id}", async (
+            HttpContext context,
+            int id,
+            UpdateInstitucionRequest request,
+            IInstitucionService service,
+            IBitacoraClient bitacoraClient) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             if (id != request.ID)
             {
                 return Results.BadRequest(new
@@ -63,7 +121,10 @@ public static class InstitucionEndpoint
 
             if (result.success)
             {
-                await bitacora.Registrar("Administrador del Sistema", $"Modificó la institucion {request.Nombre}");
+                await bitacoraClient.RegistrarAsync(
+                    "Administrador del Sistema",
+                    $"Modificó la institucion {request.Nombre}",
+                    token);
 
                 return Results.Ok(new
                 {
@@ -82,8 +143,22 @@ public static class InstitucionEndpoint
             return Results.BadRequest(new { error = result.message });
         });
 
-        group.MapDelete("/{id}", async (int id, IInstitucionService service, IBitacoraService bitacora) =>
+        group.MapDelete("/{id}", async (
+            HttpContext context,
+            int id,
+            IInstitucionService service,
+            IBitacoraClient bitacoraClient) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             var institucion = await service.GetById(id);
 
             if (institucion == null)
@@ -98,7 +173,10 @@ public static class InstitucionEndpoint
 
             if (result.success)
             {
-                await bitacora.Registrar("Administrador del Sistema", $"Eliminó la institucion {institucion.Nombre}");
+                await bitacoraClient.RegistrarAsync(
+                    "Administrador del Sistema",
+                    $"Eliminó la institucion {institucion.Nombre}",
+                    token);
 
                 return Results.Ok(new
                 {

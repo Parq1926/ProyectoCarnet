@@ -1,4 +1,5 @@
-﻿using SRV3_Carreras.Services;
+﻿using SRV3_Carreras.Auth;
+using SRV3_Carreras.Services;
 
 namespace SRV3_Carreras;
 
@@ -8,29 +9,74 @@ public static class CarreraEndpoint
     {
         var group = app.MapGroup("/carreras");
 
-        group.MapGet("/", async (ICarreraService service) =>
+        group.MapGet("/", async (
+            HttpContext context,
+            ICarreraService service) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             var carreras = await service.GetAll();
+
             return Results.Ok(carreras);
         });
 
-        group.MapGet("/{id}", async (int id, ICarreraService service) =>
+        group.MapGet("/{id}", async (
+            HttpContext context,
+            int id,
+            ICarreraService service) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             var carrera = await service.GetById(id);
+
             if (carrera != null)
             {
                 return Results.Ok(carrera);
             }
+
             return Results.NotFound($"Carrera con ID {id} no encontrada");
         });
 
-        group.MapPost("/", async (CreateCarreraRequest request, ICarreraService service, IBitacoraService bitacora) =>
+        group.MapPost("/", async (
+            HttpContext context,
+            CreateCarreraRequest request,
+            ICarreraService service,
+            IBitacoraClient bitacoraClient) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             var result = await service.Create(request);
 
             if (result.success)
             {
-                await bitacora.Registrar("Administrador del Sistema", $"Creó la carrera {request.Nombre}");
+                await bitacoraClient.RegistrarAsync(
+                    "Administrador del Sistema",
+                    $"Creó la carrera {request.Nombre}",
+                    token);
 
                 return Results.Created($"/carreras/{result.id}", new
                 {
@@ -48,21 +94,45 @@ public static class CarreraEndpoint
                 });
             }
 
-            return Results.BadRequest(new { error = result.message });
+            return Results.BadRequest(new
+            {
+                error = result.message
+            });
         });
 
-        group.MapPut("/{id}", async (int id, UpdateCarreraRequest request, ICarreraService service, IBitacoraService bitacora) =>
+        group.MapPut("/{id}", async (
+            HttpContext context,
+            int id,
+            UpdateCarreraRequest request,
+            ICarreraService service,
+            IBitacoraClient bitacoraClient) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             if (id != request.ID)
             {
-                return Results.BadRequest(new { error = "El ID de la ruta no coincide con el ID del cuerpo" });
+                return Results.BadRequest(new
+                {
+                    error = "El ID de la ruta no coincide con el ID del cuerpo"
+                });
             }
 
             var result = await service.Update(request);
 
             if (result.success)
             {
-                await bitacora.Registrar("Administrador del Sistema", $"Modificó la carrera {request.Nombre}");
+                await bitacoraClient.RegistrarAsync(
+                    "Administrador del Sistema",
+                    $"Modificó la carrera {request.Nombre}",
+                    token);
 
                 return Results.Ok(new
                 {
@@ -80,11 +150,28 @@ public static class CarreraEndpoint
                 });
             }
 
-            return Results.BadRequest(new { error = result.message });
+            return Results.BadRequest(new
+            {
+                error = result.message
+            });
         });
 
-        group.MapDelete("/{id}", async (int id, ICarreraService service, IBitacoraService bitacora) =>
+        group.MapDelete("/{id}", async (
+            HttpContext context,
+            int id,
+            ICarreraService service,
+            IBitacoraClient bitacoraClient) =>
         {
+            var token = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var tokenValidator = context.RequestServices
+                .GetRequiredService<ITokenValidator>();
+
+            if (!await tokenValidator.ValidateAsync(token))
+                return Results.Unauthorized();
+
             var carrera = await service.GetById(id);
 
             if (carrera == null)
@@ -99,7 +186,10 @@ public static class CarreraEndpoint
 
             if (result.success)
             {
-                await bitacora.Registrar("Administrador del Sistema", $"Eliminó la carrera {carrera.Nombre}");
+                await bitacoraClient.RegistrarAsync(
+                    "Administrador del Sistema",
+                    $"Eliminó la carrera {carrera.Nombre}",
+                    token);
 
                 return Results.Ok(new
                 {
@@ -117,7 +207,10 @@ public static class CarreraEndpoint
                 });
             }
 
-            return Results.BadRequest(new { error = result.message });
+            return Results.BadRequest(new
+            {
+                error = result.message
+            });
         });
     }
 }
