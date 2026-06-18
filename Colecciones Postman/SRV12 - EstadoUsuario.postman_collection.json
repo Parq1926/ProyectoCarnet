@@ -1,0 +1,392 @@
+{
+  "info": {
+    "_postman_id": "5da78a42-0379-4073-9133-bde841a8c2e1",
+    "name": "SRV12 - EstadoUsuario",
+    "description": "Cambio de estado de usuario. Ejecute primero Login. baseUrl es HTTPS local: en Settings desactive 'SSL certificate verification'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "47023020",
+    "_collection_link": "https://go.postman.co/collection/47023020-5da78a42-0379-4073-9133-bde841a8c2e1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Casos exitosos",
+      "item": [
+        {
+          "name": "PATCH - Cambiar a ACTIVO (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 200', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioIdentificacion\": \"{{usuarioIdentificacion}}\",\n  \"codigoEstado\": \"ACTIVO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "estado"
+              ]
+            },
+            "description": "Cambia el estado del usuario a ACTIVO."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH - Cambiar a INACTIVO (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 200', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioIdentificacion\": \"{{usuarioIdentificacion}}\",\n  \"codigoEstado\": \"INACTIVO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "estado"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Casos de error",
+      "item": [
+        {
+          "name": "PATCH - Sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 401', function () {",
+                  "    pm.expect(pm.response.code).to.eql(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioIdentificacion\": \"{{usuarioIdentificacion}}\",\n  \"codigoEstado\": \"ACTIVO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "estado"
+              ]
+            },
+            "description": "No envia Bearer -> 401 Unauthorized."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH - Datos faltantes (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 400', function () {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioIdentificacion\": \"\",\n  \"codigoEstado\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "estado"
+              ]
+            },
+            "description": "Body vacio -> 400 Bad Request."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH - Estado inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 404', function () {",
+                  "    pm.expect(pm.response.code).to.eql(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioIdentificacion\": \"{{usuarioIdentificacion}}\",\n  \"codigoEstado\": \"NOEXISTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "estado"
+              ]
+            },
+            "description": "Codigo de estado que no existe -> 404 Not Found."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "0. Login (SRV1) - obtener token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var json;",
+              "try { json = pm.response.json(); } catch (e) { json = null; }",
+              "if (json && json.access_token) {",
+              "    pm.collectionVariables.set('token', json.access_token);",
+              "    if (json.refresh_token) pm.collectionVariables.set('refresh_token', json.refresh_token);",
+              "    console.log('Token guardado en {{token}}');",
+              "} else {",
+              "    console.log('No se encontro access_token. Revise usuario/contrasena/tipo o la ruta del Login.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "accept",
+            "value": "*/*"
+          },
+          {
+            "key": "usuario",
+            "value": "{{usuario}}"
+          },
+          {
+            "key": "contrasena",
+            "value": "{{contrasena}}"
+          },
+          {
+            "key": "tipo",
+            "value": "{{tipo}}"
+          }
+        ],
+        "url": {
+          "raw": "{{loginUrl}}/api/Auth/login",
+          "host": [
+            "{{loginUrl}}"
+          ],
+          "path": [
+            "api",
+            "Auth",
+            "login"
+          ]
+        },
+        "description": "Login en SRV1 (hosteado). Credenciales en headers. Si responde 201 guarda el access_token en {{token}}."
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:60309"
+    },
+    {
+      "key": "usuarioIdentificacion",
+      "value": "1-2345-6789"
+    },
+    {
+      "key": "loginUrl",
+      "value": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Login"
+    },
+    {
+      "key": "usuario",
+      "value": "admin@cuc.ac.cr"
+    },
+    {
+      "key": "contrasena",
+      "value": "CAMBIAR_CONTRASENA"
+    },
+    {
+      "key": "tipo",
+      "value": "administrador"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    }
+  ]
+}

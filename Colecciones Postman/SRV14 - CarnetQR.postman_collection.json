@@ -1,0 +1,307 @@
+{
+  "info": {
+    "_postman_id": "0513fa56-fc1c-4079-9be1-0640819d9007",
+    "name": "SRV14 - CarnetQR",
+    "description": "Generacion del QR del carnet. Ejecute primero Login. Usuarios simulados validos: 1-0234-5678, 2-0456-7890, 3-0678-9012, 4-0891-2345.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "47023020",
+    "_collection_link": "https://go.postman.co/collection/47023020-0513fa56-fc1c-4079-9be1-0640819d9007?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Casos exitosos",
+      "item": [
+        {
+          "name": "GET - Carnet QR usuario valido (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 200', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "// Renderiza el QR en la pestana 'Visualize'",
+                  "var b64;",
+                  "try { b64 = pm.response.json(); } catch (e) { b64 = pm.response.text(); }",
+                  "if (typeof b64 === 'string') {",
+                  "  pm.visualizer.set(\"<img style='max-width:320px' src='data:image/png;base64,{{img}}'/>\", { img: b64 });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuario/qr?identificacion=1-0234-5678",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuario",
+                "qr"
+              ],
+              "query": [
+                {
+                  "key": "identificacion",
+                  "value": "1-0234-5678"
+                }
+              ]
+            },
+            "description": "Usuario simulado existente. Devuelve el QR en Base64. Vea la pestana 'Visualize' para ver la imagen."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Casos de error",
+      "item": [
+        {
+          "name": "GET - Sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 401', function () {",
+                  "    pm.expect(pm.response.code).to.eql(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuario/qr?identificacion=1-0234-5678",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuario",
+                "qr"
+              ],
+              "query": [
+                {
+                  "key": "identificacion",
+                  "value": "1-0234-5678"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Sin identificacion (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 400', function () {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuario/qr",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuario",
+                "qr"
+              ]
+            },
+            "description": "Falta el parametro identificacion -> 400."
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Usuario inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Consola: View > Show Postman Console (Ctrl/Cmd+Alt+C)",
+                  "console.log('===== ' + pm.info.requestName + ' =====');",
+                  "console.log('Status:', pm.response.code, pm.response.status);",
+                  "var _b;",
+                  "try { _b = JSON.stringify(pm.response.json(), null, 2); }",
+                  "catch (e) { _b = pm.response.text(); }",
+                  "console.log('Body:', _b);",
+                  "pm.test('Codigo esperado 404', function () {",
+                  "    pm.expect(pm.response.code).to.eql(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuario/qr?identificacion=9-9999-9999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuario",
+                "qr"
+              ],
+              "query": [
+                {
+                  "key": "identificacion",
+                  "value": "9-9999-9999"
+                }
+              ]
+            },
+            "description": "Identificacion que no esta en los datos simulados -> 404."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "0. Login (SRV1) - obtener token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var json;",
+              "try { json = pm.response.json(); } catch (e) { json = null; }",
+              "if (json && json.access_token) {",
+              "    pm.collectionVariables.set('token', json.access_token);",
+              "    if (json.refresh_token) pm.collectionVariables.set('refresh_token', json.refresh_token);",
+              "    console.log('Token guardado en {{token}}');",
+              "} else {",
+              "    console.log('No se encontro access_token. Revise usuario/contrasena/tipo o la ruta del Login.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "accept",
+            "value": "*/*"
+          },
+          {
+            "key": "usuario",
+            "value": "{{usuario}}"
+          },
+          {
+            "key": "contrasena",
+            "value": "{{contrasena}}"
+          },
+          {
+            "key": "tipo",
+            "value": "{{tipo}}"
+          }
+        ],
+        "url": {
+          "raw": "{{loginUrl}}/api/Auth/login",
+          "host": [
+            "{{loginUrl}}"
+          ],
+          "path": [
+            "api",
+            "Auth",
+            "login"
+          ]
+        },
+        "description": "Login en SRV1 (hosteado). Credenciales en headers. Si responde 201 guarda el access_token en {{token}}."
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5014"
+    },
+    {
+      "key": "identificacion",
+      "value": "1-0234-5678"
+    },
+    {
+      "key": "loginUrl",
+      "value": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Login"
+    },
+    {
+      "key": "usuario",
+      "value": "admin@cuc.ac.cr"
+    },
+    {
+      "key": "contrasena",
+      "value": "CAMBIAR_CONTRASENA"
+    },
+    {
+      "key": "tipo",
+      "value": "administrador"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    }
+  ]
+}

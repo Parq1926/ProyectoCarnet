@@ -1,0 +1,358 @@
+{
+  "info": {
+    "_postman_id": "39d4b2e8-f4e1-4758-8b29-6696444f3fc3",
+    "name": "LoginSRV1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55334853",
+    "_collection_link": "https://go.postman.co/collection/55334853-39d4b2e8-f4e1-4758-8b29-6696444f3fc3?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "api",
+      "item": [
+        {
+          "name": "Auth",
+          "item": [
+            {
+              "name": "login",
+              "item": [
+                {
+                  "name": "/api/Auth/login",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "usuario",
+                        "value": "string"
+                      },
+                      {
+                        "key": "contrasena",
+                        "value": "string"
+                      },
+                      {
+                        "key": "tipo",
+                        "value": "string"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/Auth/login",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "Auth",
+                        "login"
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "OK",
+                      "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                          {
+                            "key": "usuario",
+                            "value": "string"
+                          },
+                          {
+                            "key": "contrasena",
+                            "value": "string"
+                          },
+                          {
+                            "key": "tipo",
+                            "value": "string"
+                          }
+                        ],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/Auth/login",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "Auth",
+                            "login"
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "refresh",
+              "item": [
+                {
+                  "name": "/api/Auth/refresh",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"refreshToken\": \"string\"\n}",
+                      "options": {
+                        "raw": {
+                          "headerFamily": "json",
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/Auth/refresh",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "Auth",
+                        "refresh"
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "OK",
+                      "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                          {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                          }
+                        ],
+                        "body": {
+                          "mode": "raw",
+                          "raw": "{\n  \"refreshToken\": \"string\"\n}",
+                          "options": {
+                            "raw": {
+                              "headerFamily": "json",
+                              "language": "json"
+                            }
+                          }
+                        },
+                        "url": {
+                          "raw": "{{baseUrl}}/api/Auth/refresh",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "Auth",
+                            "refresh"
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "validate",
+              "item": [
+                {
+                  "name": "/api/Auth/validate",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/Auth/validate?token=string",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "Auth",
+                        "validate"
+                      ],
+                      "query": [
+                        {
+                          "key": "token",
+                          "value": "string"
+                        }
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "OK",
+                      "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/Auth/validate?token=string",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "Auth",
+                            "validate"
+                          ],
+                          "query": [
+                            {
+                              "key": "token",
+                              "value": "string"
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "WeatherForecast",
+      "item": [
+        {
+          "name": "Get Weather Forecast",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/WeatherForecast",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "WeatherForecast"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "text/plain"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/WeatherForecast",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "WeatherForecast"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"date\": \"1979-08-02\",\n    \"temperatureC\": 8404,\n    \"temperatureF\": 5166,\n    \"summary\": \"string\"\n  },\n  {\n    \"date\": \"1974-04-29\",\n    \"temperatureC\": 4868,\n    \"temperatureF\": 547,\n    \"summary\": \"string\"\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "InicioSesion",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "usuario",
+            "value": "admin@cuc.ac.cr",
+            "type": "text"
+          },
+          {
+            "key": "contrasena",
+            "value": "Admin123*",
+            "type": "text"
+          },
+          {
+            "key": "tipo",
+            "value": "Administrador",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Login/api/Auth/login",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Login",
+            "api",
+            "Auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "VerificarToken",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "RenovarToken",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "/"
+    }
+  ]
+}
