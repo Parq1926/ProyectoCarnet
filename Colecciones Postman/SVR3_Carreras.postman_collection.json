@@ -1,0 +1,326 @@
+{
+  "info": {
+    "_postman_id": "92be3acb-5e1b-47e1-a8c1-8b310843b944",
+    "name": "SVR3_Carreras",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55545143",
+    "_collection_link": "https://go.postman.co/collection/55545143-92be3acb-5e1b-47e1-a8c1-8b310843b944?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Consultar_Carrera",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true,
+        "disabledSystemHeaders": {
+          "host": true,
+          "user-agent": true,
+          "accept": true,
+          "connection": true,
+          "accept-encoding": true
+        }
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE4MTY2NDAsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.JYxKhOT-mR1QToNdcsOcZybAkSPLwkDfQp-HjxKsAyk",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Carreras/carreras",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Carreras",
+            "carreras"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear_Carrera",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-type": true,
+          "content-length": true,
+          "user-agent": true,
+          "host": true,
+          "accept": true,
+          "accept-encoding": true,
+          "connection": true
+        }
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE4MTY2NDAsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.JYxKhOT-mR1QToNdcsOcZybAkSPLwkDfQp-HjxKsAyk",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"nombre\": \"PRUEBAHOSTING2\",\r\n\"director\": \"Dr. Alejandro Perez\",\r\n\"email\": \"cuuber@cuc.cr\",\r\n\"telefono\": \"860192432\",\r\n\"institucionID\": 9,\r\n\"institucionNombre\": \"ssssssssssss\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Carreras/carreras",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Carreras",
+            "carreras"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Actualizar_Carrera",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-type": true,
+          "content-length": true,
+          "host": true,
+          "user-agent": true,
+          "accept-encoding": true,
+          "accept": true,
+          "connection": true
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE4MTY2NDAsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.JYxKhOT-mR1QToNdcsOcZybAkSPLwkDfQp-HjxKsAyk",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"id\": 10,\r\n \"nombre\": \"HOSTING ACTUALIZADO 1\",\r\n \"director\": \"Dr. Carlos Rodriguez\",\r\n \"email\": \"cuubadd@cuc.cr\",\r\n \"telefono\": \"25509999\",\r\n \"institucionID\": 1,\r\n \"institucionNombre\": \"Colegio Universitario de Cartago\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Carreras/carreras/10",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Carreras",
+            "carreras",
+            "10"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Eliminar_Carrera",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "host": true,
+          "user-agent": true,
+          "accept": true,
+          "accept-encoding": true
+        }
+      },
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE4MTY2NDAsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.JYxKhOT-mR1QToNdcsOcZybAkSPLwkDfQp-HjxKsAyk",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Carreras/carreras/11",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Carreras",
+            "carreras",
+            "11"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "TOKEN",
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-length": true,
+          "user-agent": true,
+          "accept-encoding": true,
+          "connection": true,
+          "host": true,
+          "accept": true
+        }
+      },
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "usuario",
+            "value": "admin@cuc.ac.cr"
+          },
+          {
+            "key": "contrasena",
+            "value": "Admin123*"
+          },
+          {
+            "key": "tipo",
+            "value": "Administrador"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "text"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Login/api/Auth/login",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Login",
+            "api",
+            "Auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "BITACORA",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE3NzEwOTcsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.jR6OWB-PrR8GBYF7XiZqTTfYbrshnhqnNXF6o6xM5gM",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"usuario\": \"Prueba\",\r\n  \"accion\": \"Probando bitacora\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Bitacora/bitacora",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Bitacora",
+            "bitacora"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
