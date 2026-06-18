@@ -1,0 +1,184 @@
+{
+  "info": {
+    "_postman_id": "e4462c32-de6d-4209-a134-b9247116f6a5",
+    "name": "SVR4_Areas",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55545143",
+    "_collection_link": "https://go.postman.co/collection/55545143-e4462c32-de6d-4209-a134-b9247116f6a5?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Consultar_Area",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE4MTcxNTMsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.GMtY-IH8gd2eEDCB7TZFg0ILDuvCDyF3QC-1erm_pGo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"nombre\": \"Secretaria\",\r\n \"institucionID\": 22,\r\n \"institucionNombre\": \"Colegio Universitario de Cartago\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Areas/areas",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Areas",
+            "areas"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear_Area",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE4MTcxNTMsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.GMtY-IH8gd2eEDCB7TZFg0ILDuvCDyF3QC-1erm_pGo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"nombre\": \"Departamento de limpieza AAA\",\r\n \"institucionID\": 21,\r\n \"institucionNombre\": \"Colegio Universitario de Cartago\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Areas/areas",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Areas",
+            "areas"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Modificar_Area",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE4MTcxNTMsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.GMtY-IH8gd2eEDCB7TZFg0ILDuvCDyF3QC-1erm_pGo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"id\": 1005,\r\n \"nombre\": \"Departamento de limpieza yy\",\r\n \"institucionID\": 11,\r\n \"institucionNombre\": \"Colegio Universitario de Cartago\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Areas/areas/1005",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Areas",
+            "areas",
+            "1005"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Eliminar_Area",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiQWRtaW5pc3RyYWRvciBkZWwgU2lzdGVtYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGN1Yy5hYy5jciIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluaXN0cmFkb3IiLCJleHAiOjE3ODE4MTcxNTMsImlzcyI6IkNVQyIsImF1ZCI6IkNVQ0FwcCJ9.GMtY-IH8gd2eEDCB7TZFg0ILDuvCDyF3QC-1erm_pGo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"nombre\": \"Secretaria\",\r\n \"institucionID\": 1,\r\n \"institucionNombre\": \"Colegio Universitario de Cartago\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://tiusr22pl.cuc-carrera-ti.ac.cr/Areas/areas/1005",
+          "protocol": "https",
+          "host": [
+            "tiusr22pl",
+            "cuc-carrera-ti",
+            "ac",
+            "cr"
+          ],
+          "path": [
+            "Areas",
+            "areas",
+            "1005"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
