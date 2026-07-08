@@ -1,4 +1,4 @@
-﻿<!-- Pages/Shared/_Layout.cshtml -->
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -35,13 +35,15 @@
                             <span>Usuarios</span>
                         </a>
                     </li>
-                    <!-- Web5 - Administracion de Carreras -->
+
+                    <!-- Web5 - Administración de Carreras -->
                     <li id="menu-carreras">
-                        <a href="http://localhost:7003/index.html">
+                        <a href="http://localhost:7003/index.html" target="_blank">
                             <i class="fas fa-graduation-cap"></i>
                             <span>Carreras</span>
                         </a>
                     </li>
+
                     <!-- Web6 - Administración de Tipos de Usuario -->
                     <li id="menu-tipos-usuario">
                         <a href="#">
@@ -172,7 +174,7 @@
     </div>
 
     <script>
-            // ✅ Validación de autenticación
+            // Validación de autenticación
             document.addEventListener('DOMContentLoaded', function() {
                 const token = localStorage.getItem('accessToken');
                 const currentPath = window.location.pathname;
@@ -196,7 +198,7 @@
                     document.getElementById('userRole').textContent = tipo ? `(${tipo})` : '';
                 }
 
-                // ✅ Marcar el ítem del menú activo según la página actual
+                // Marcar el ítem del menú activo según la página actual
                 const menuItems = document.querySelectorAll('.sidebar-nav ul li');
                 menuItems.forEach(item => {
                     const link = item.querySelector('a');

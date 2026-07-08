@@ -1,0 +1,70 @@
+﻿@page
+@model SRV3_Carreras.Pages.Carrera.DetailsModel
+@{
+    ViewData["Title"] = "Detalles de Carrera";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="carrera-details-container">
+    <div class="details-header">
+        <h2><i class="fas fa-info-circle"></i> Detalles de la Carrera</h2>
+        <div class="details-actions">
+            <a asp-page="/Carrera/Edit" asp-route-id="@Model.Carrera.ID" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a asp-page="/Carrera/Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="details-card">
+        <div class="details-grid">
+            <div class="detail-item">
+                <span class="label"><i class="fas fa-id"></i> ID:</span>
+                <span class="value">@Model.Carrera.ID</span>
+            </div>
+            <div class="detail-item">
+                <span class="label"><i class="fas fa-graduation-cap"></i> Nombre:</span>
+                <span class="value">@Model.Carrera.Nombre</span>
+            </div>
+            <div class="detail-item">
+                <span class="label"><i class="fas fa-user-tie"></i> Director:</span>
+                <span class="value">@Model.Carrera.Director</span>
+            </div>
+            <div class="detail-item">
+                <span class="label"><i class="fas fa-envelope"></i> Email:</span>
+                <span class="value">@Model.Carrera.Email</span>
+            </div>
+            <div class="detail-item">
+                <span class="label"><i class="fas fa-phone"></i> Telefono:</span>
+                <span class="value">@Model.Carrera.Telefono</span>
+            </div>
+            <div class="detail-item">
+                <span class="label"><i class="fas fa-university"></i> Institucion:</span>
+                <span class="value">@Model.Carrera.InstitucionNombre (ID: @Model.Carrera.InstitucionID)</span>
+            </div>
+            <div class="detail-item">
+                <span class="label"><i class="fas fa-toggle-on"></i> Estado:</span>
+                <span class="value badge @(Model.Carrera.Activo ? "bg-success" : "bg-danger")">
+                    @(Model.Carrera.Activo ? "Activo" : "Inactivo")
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="label"><i class="fas fa-calendar-plus"></i> Fecha Creacion:</span>
+                <span class="value">@Model.Carrera.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+            @if (Model.Carrera.FechaModificacion.HasValue)
+            {
+                <div class="detail-item">
+                    <span class="label"><i class="fas fa-calendar-edit"></i> Fecha Modificacion:</span>
+                    <span class="value">@Model.Carrera.FechaModificacion.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/carrera.css" />
+}

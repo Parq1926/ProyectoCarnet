@@ -1,0 +1,93 @@
+﻿@page
+@model SRV3_Carreras.Pages.Carrera.IndexModel
+@{
+    ViewData["Title"] = "Administracion de Carreras";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="carrera-container">
+    <div class="carrera-header">
+        <h2><i class="fas fa-graduation-cap"></i> Administracion de Carreras</h2>
+        <a asp-page="/Carrera/Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Carrera
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="carrera-grid">
+        @if (Model.Carreras != null && Model.Carreras.Any())
+        {
+            @foreach (var carrera in Model.Carreras)
+            {
+                <div class="carrera-card">
+                    <div class="carrera-card-header">
+                        <h3>@carrera.Nombre</h3>
+                        <span class="badge @(carrera.Activo ? "bg-success" : "bg-danger")">
+                            @(carrera.Activo ? "Activo" : "Inactivo")
+                        </span>
+                    </div>
+                    <div class="carrera-card-body">
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-user-tie"></i> Director:</span>
+                            <span class="value">@carrera.Director</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-envelope"></i> Email:</span>
+                            <span class="value">@carrera.Email</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-phone"></i> Telefono:</span>
+                            <span class="value">@carrera.Telefono</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-university"></i> Institucion:</span>
+                            <span class="value">@carrera.InstitucionNombre</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-calendar"></i> Creado:</span>
+                            <span class="value">@carrera.FechaCreacion.ToString("dd/MM/yyyy")</span>
+                        </div>
+                    </div>
+                    <div class="carrera-card-footer">
+                        <a asp-page="/Carrera/Details" asp-route-id="@carrera.ID" class="btn btn-info btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a asp-page="/Carrera/Edit" asp-route-id="@carrera.ID" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a asp-page="/Carrera/Delete" asp-route-id="@carrera.ID" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-graduation-cap fa-4x text-muted"></i>
+                <p>No hay carreras registradas</p>
+                <a asp-page="/Carrera/Create" class="btn btn-primary">Crear primera carrera</a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/carrera.css" />
+}
