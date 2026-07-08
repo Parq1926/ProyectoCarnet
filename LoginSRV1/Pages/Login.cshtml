@@ -1,0 +1,161 @@
+﻿@page
+@model LoginSRV1.Pages.LoginModel
+@{
+    ViewData["Title"] = "Iniciar Sesión - Carnet Digital CUC";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Carnet Digital CUC</title>
+    <link rel="stylesheet" href="~/css/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo-container">
+                <div class="logo-cuc">CUC</div>
+                <h1 class="title">Carnet Digital</h1>
+                <h2 class="subtitle">CUC</h2>
+            </div>
+
+            <!-- Mensaje de redirección -->
+            <div id="redirectMessage" class="alert alert-warning" style="display:none;"></div>
+            <div id="errorMessage" class="alert alert-danger" style="display:none;"></div>
+            <div id="successMessage" class="alert alert-success" style="display:none;"></div>
+
+            <form id="loginForm" class="login-form" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="Usuario">Usuario (Email)</label>
+                    <input type="email" id="Usuario" name="Usuario" class="form-control" 
+                           placeholder="ejemplo@cuc.ac.cr" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="Contrasena">Contraseña</label>
+                    <input type="password" id="Contrasena" name="Contrasena" class="form-control" 
+                           placeholder="Ingrese su contraseña" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="Tipo">Tipo de Usuario</label>
+                    <select id="Tipo" name="Tipo" class="form-control" required>
+                        <option value="">Seleccione...</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Funcionario">Funcionario</option>
+                        <option value="Estudiante">Estudiante</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-login" id="btnLogin">Iniciar Sesión</button>
+            </form>
+
+            <div class="footer">
+                <p>© @DateTime.Now.Year - Carnet Digital CUC</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mostrar mensaje de redirección si existe
+        document.addEventListener('DOMContentLoaded', function() {
+            const redirectMsg = localStorage.getItem('redirectMessage');
+            if (redirectMsg) {
+                const redirectDiv = document.getElementById('redirectMessage');
+                redirectDiv.textContent = redirectMsg;
+                redirectDiv.style.display = 'block';
+                localStorage.removeItem('redirectMessage');
+            }
+
+            // Verificar si el token existe pero está expirado
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                // Si hay token, redirigir a Welcome (el layout lo maneja)
+                window.location.href = '/Welcome';
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const usuario = document.getElementById('Usuario').value;
+            const contrasena = document.getElementById('Contrasena').value;
+            const tipo = document.getElementById('Tipo').value;
+
+            const redirectDiv = document.getElementById('redirectMessage');
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
+            redirectDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            if (!usuario || !contrasena || !tipo) {
+                errorDiv.textContent = 'Todos los campos son requeridos';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.textContent = 'Cargando...';
+
+            try {
+                const response = await fetch('/api/Auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        Usuario: usuario,
+                        Contrasena: contrasena,
+                        Tipo: tipo
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Respuesta:', data);
+
+                if (data.codigo === 200) {
+                    // ✅ Login exitoso
+                    localStorage.setItem('accessToken', data.accessToken);
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                    localStorage.setItem('usuarioId', data.usuarioId);
+                    localStorage.setItem('usuarioEmail', usuario);
+                    localStorage.setItem('usuarioTipo', tipo);
+                    localStorage.setItem('nombreCompleto', usuario);
+                    
+                    successDiv.textContent = 'Login exitoso. Redirigiendo...';
+                    successDiv.style.display = 'block';
+
+                    setTimeout(function() {
+                        window.location.href = '/Welcome';
+                    }, 500);
+                    
+                } else if (data.codigo === 403) {
+                    // Usuario bloqueado - Mostrar mensaje y permitir otro intento
+                    errorDiv.textContent = data.mensaje || 'Usuario bloqueado permanentemente. Contacte al administrador.';
+                    errorDiv.style.display = 'block';
+                    
+                    //NO deshabilitar el formulario - permitir probar otro usuario
+                    // Solo mostrar el mensaje de bloqueo
+                    
+                } else {
+                    errorDiv.textContent = data.mensaje || 'Error al iniciar sesión';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = 'Error de conexión: ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Iniciar Sesión';
+            }
+        });
+    </script>
+</body>
+</html>

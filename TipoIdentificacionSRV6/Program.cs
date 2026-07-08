@@ -4,9 +4,12 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SRV6_TipoIdentificacion.Data;
 using SRV6_TipoIdentificacion.Endpoints;
+using SRV6_TipoIdentificacion.Interfaces;
+using SRV6_TipoIdentificacion.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configurar CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -17,9 +20,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-// DbContext
+// DbContext - Conexión a la base de datos
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// 🔥 Registrar los servicios (para inyección de dependencias)
+builder.Services.AddScoped<ITipoIdentificacionService, TipoIdentificacionService>();
 
 // Configurar autenticación JWT
 var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"] ?? "EstaEsMiClaveSecretaParaJWT1234567890");
@@ -46,11 +52,13 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Middleware pipeline
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Mapear los endpoints
 app.MapTipoIdentificacionEndpoints();
 
 app.Run();

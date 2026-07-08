@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SRV6_TipoIdentificacion.Data;
 using SRV6_TipoIdentificacion.DTOs;
-using SRV6_TipoIdentificacion.Entities;
+using SRV6_TipoIdentificacion.Interfaces;
 
 namespace SRV6_TipoIdentificacion.Endpoints;
 
@@ -10,91 +8,83 @@ public static class TipoIdentificacionEndpoints
 {
     public static void MapTipoIdentificacionEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/TipoIdentificacion").WithTags("TipoIdentificacion")
+        var group = routes.MapGroup("/api/TipoIdentificacion")
             .WithTags("TipoIdentificacion")
-            .RequireAuthorization(); 
+            .RequireAuthorization();
 
-        group.MapGet("/", async (ApplicationDbContext db) =>
+        // GET /api/TipoIdentificacion - Listar todos
+        group.MapGet("/", async (ITipoIdentificacionService service) =>
         {
-            var tipos = await db.TiposIdentificacion
-                .Select(t => new TipoIdentificacionDto { Id = t.Id, Nombre = t.Nombre })
-                .ToListAsync();
+            var tipos = await service.GetAllAsync();
             return Results.Ok(new { codigo = 200, mensaje = "OK", data = tipos });
         });
 
-        group.MapGet("/{id}", async (int id, ApplicationDbContext db) =>
+        // GET /api/TipoIdentificacion/{id} - Obtener por ID
+        group.MapGet("/{id}", async (int id, ITipoIdentificacionService service) =>
         {
-            var tipo = await db.TiposIdentificacion.FindAsync(id);
+            var tipo = await service.GetByIdAsync(id);
             if (tipo == null)
                 return Results.NotFound(new { codigo = 404, mensaje = $"Tipo de identificación con ID {id} no encontrado" });
-            return Results.Ok(new { codigo = 200, mensaje = "OK", data = new TipoIdentificacionDto { Id = tipo.Id, Nombre = tipo.Nombre } });
+
+            return Results.Ok(new { codigo = 200, mensaje = "OK", data = tipo });
         });
 
-        group.MapPost("/", async ([FromBody] CrearTipoIdentificacionDto dto, ApplicationDbContext db) =>
+        // POST /api/TipoIdentificacion - Crear nuevo
+        group.MapPost("/", async ([FromBody] CrearTipoIdentificacionDto dto, ITipoIdentificacionService service) =>
         {
-            if (string.IsNullOrWhiteSpace(dto.Nombre))
-                return Results.BadRequest(new { codigo = 400, mensaje = "El nombre es requerido" });
+            var (ok, error, data) = await service.CreateAsync(dto);
 
-            var existe = await db.TiposIdentificacion.AnyAsync(t => t.Nombre == dto.Nombre);
-            if (existe)
-                return Results.Conflict(new { codigo = 409, mensaje = $"El tipo de identificación '{dto.Nombre}' ya existe" });
+            if (!ok)
+            {
+                if (error.Contains("ya existe"))
+                    return Results.Conflict(new { codigo = 409, mensaje = error });
 
-            var tipo = new TipoIdentificacion { Nombre = dto.Nombre };
-            db.TiposIdentificacion.Add(tipo);
-            await db.SaveChangesAsync();
+                return Results.BadRequest(new { codigo = 400, mensaje = error });
+            }
 
-            return Results.Created($"/api/TipoIdentificacion/{tipo.Id}", new
+            return Results.Created($"/api/TipoIdentificacion/{data?.Id}", new
             {
                 codigo = 201,
                 mensaje = "Tipo de identificación creado exitosamente",
-                data = new TipoIdentificacionDto { Id = tipo.Id, Nombre = tipo.Nombre }
+                data = data
             });
         });
 
-        group.MapPut("/{id}", async (int id, [FromBody] CrearTipoIdentificacionDto dto, ApplicationDbContext db) =>
+        // PUT /api/TipoIdentificacion/{id} - Actualizar
+        group.MapPut("/{id}", async (int id, [FromBody] CrearTipoIdentificacionDto dto, ITipoIdentificacionService service) =>
         {
-            if (string.IsNullOrWhiteSpace(dto.Nombre))
-                return Results.BadRequest(new { codigo = 400, mensaje = "El nombre es requerido" });
+            var (ok, error, data) = await service.UpdateAsync(id, dto);
 
-            var tipo = await db.TiposIdentificacion.FindAsync(id);
-            if (tipo == null)
-                return Results.NotFound(new { codigo = 404, mensaje = $"Tipo de identificación con ID {id} no encontrado" });
+            if (!ok)
+            {
+                if (error.Contains("encontrado"))
+                    return Results.NotFound(new { codigo = 404, mensaje = error });
 
-            var existe = await db.TiposIdentificacion.AnyAsync(t => t.Nombre == dto.Nombre && t.Id != id);
-            if (existe)
-                return Results.Conflict(new { codigo = 409, mensaje = $"Ya existe otro tipo con el nombre '{dto.Nombre}'" });
+                if (error.Contains("ya existe"))
+                    return Results.Conflict(new { codigo = 409, mensaje = error });
 
-            var nombreAnterior = tipo.Nombre;
-            tipo.Nombre = dto.Nombre;
-            await db.SaveChangesAsync();
+                return Results.BadRequest(new { codigo = 400, mensaje = error });
+            }
 
             return Results.Ok(new
             {
                 codigo = 200,
-                mensaje = $"Tipo de identificación actualizado exitosamente. Se cambió de '{nombreAnterior}' a '{tipo.Nombre}'",
-                anterior = nombreAnterior,
-                nuevo = tipo.Nombre,
-                data = new TipoIdentificacionDto { Id = tipo.Id, Nombre = tipo.Nombre }
+                mensaje = $"Tipo de identificación actualizado exitosamente. {error}",
+                anterior = error.Split("'")[1] ?? "",
+                nuevo = error.Split("'")[3] ?? "",
+                data = data
             });
         });
 
-        group.MapDelete("/{id}", async (int id, ApplicationDbContext db) =>
+        // DELETE /api/TipoIdentificacion/{id} - Eliminar
+        group.MapDelete("/{id}", async (int id, ITipoIdentificacionService service) =>
         {
-            var tipo = await db.TiposIdentificacion.FindAsync(id);
-            if (tipo == null)
-                return Results.NotFound(new { codigo = 404, mensaje = $"Tipo de identificación con ID {id} no encontrado" });
+            var (ok, error) = await service.DeleteAsync(id);
 
-            var nombreEliminado = tipo.Nombre;
-            db.TiposIdentificacion.Remove(tipo);
-            await db.SaveChangesAsync();
+            if (!ok)
+                return Results.NotFound(new { codigo = 404, mensaje = error });
 
-            return Results.Ok(new
-            {
-                codigo = 200,
-                mensaje = $"Tipo de identificación '{nombreEliminado}' (ID: {id}) eliminado exitosamente",
-                eliminado = nombreEliminado,
-                id = id
-            });
+            return Results.Ok(new { codigo = 200, mensaje = error });
         });
     }
 }

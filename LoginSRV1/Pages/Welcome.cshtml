@@ -1,0 +1,72 @@
+﻿@page
+@model LoginSRV1.Pages.WelcomeModel
+@{
+    ViewData["Title"] = "Bienvenido";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="welcome-page">
+    <div class="welcome-card">
+        <div class="welcome-header">
+            <div class="welcome-icon">
+                <i class="fas fa-hand-wave"></i>
+            </div>
+            <h1 class="welcome-title" id="welcomeTitle">¡Bienvenido!</h1>
+            <p class="welcome-subtitle">Carnet Digital CUC</p>
+        </div>
+
+        <div class="welcome-info-grid">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="info-content">
+                    <span class="info-label">Email</span>
+                    <span class="info-value" id="userEmail">-</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-user-tag"></i>
+                </div>
+                <div class="info-content">
+                    <span class="info-label">Tipo de Usuario</span>
+                    <span class="info-value" id="userTipo">-</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-id-badge"></i>
+                </div>
+                <div class="info-content">
+                    <span class="info-label">ID de Usuario</span>
+                    <span class="info-value" id="userId">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="welcome-actions">
+            <a href="#" class="btn-primary">
+                <i class="fas fa-id-card"></i>
+                Ver mi Carnet
+            </a>
+            <a href="#" class="btn-secondary">
+                <i class="fas fa-qrcode"></i>
+                Generar QR
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Mostrar datos del usuario
+    document.addEventListener('DOMContentLoaded', function() {
+        const nombre = localStorage.getItem('nombreCompleto') || 'Usuario';
+        document.getElementById('welcomeTitle').textContent = `¡Bienvenido, ${nombre}!`;
+        document.getElementById('userEmail').textContent = localStorage.getItem('usuarioEmail') || '-';
+        document.getElementById('userTipo').textContent = localStorage.getItem('usuarioTipo') || '-';
+        document.getElementById('userId').textContent = localStorage.getItem('usuarioId') || '-';
+    });
+</script>

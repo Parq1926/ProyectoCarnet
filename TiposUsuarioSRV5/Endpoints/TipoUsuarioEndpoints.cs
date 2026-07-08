@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SRV5_TipoUsuario.Data;
+using SRV5_TipoUsuario.Interfaces;
 using SRV5_TipoUsuario.DTOs;
-using SRV5_TipoUsuario.Entities;
 
 namespace SRV5_TipoUsuario.Endpoints;
 
@@ -10,104 +8,90 @@ public static class TipoUsuarioEndpoints
 {
     public static void MapTipoUsuarioEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/TipoUsuario").WithTags("TipoUsuario")
+        var group = routes.MapGroup("/api/TipoUsuario")
             .WithTags("TipoUsuario")
             .RequireAuthorization();
 
         // GET /api/TipoUsuario - Listar todos
-        group.MapGet("/", async (ApplicationDbContext db) =>
+        group.MapGet("/", async (ITipoUsuarioService service) =>
         {
-            var tipos = await db.TiposUsuario
-                .Select(t => new TipoUsuarioDto { Id = t.Id, Nombre = t.Nombre })
-                .ToListAsync();
-
+            var tipos = await service.GetAllAsync();
             return Results.Ok(new { codigo = 200, mensaje = "OK", data = tipos });
         });
 
         // GET /api/TipoUsuario/{id} - Obtener por ID
-        group.MapGet("/{id}", async (int id, ApplicationDbContext db) =>
+        group.MapGet("/{id}", async (int id, ITipoUsuarioService service) =>
         {
-            var tipo = await db.TiposUsuario.FindAsync(id);
+            var tipo = await service.GetByIdAsync(id);
             if (tipo == null)
                 return Results.NotFound(new { codigo = 404, mensaje = $"Tipo de usuario con ID {id} no encontrado" });
 
-            return Results.Ok(new { codigo = 200, mensaje = "OK", data = new TipoUsuarioDto { Id = tipo.Id, Nombre = tipo.Nombre } });
+            return Results.Ok(new { codigo = 200, mensaje = "OK", data = tipo });
         });
 
         // POST /api/TipoUsuario - Crear nuevo
-        group.MapPost("/", async ([FromBody] CrearTipoUsuarioDto dto, ApplicationDbContext db) =>
+        group.MapPost("/", async ([FromBody] CrearTipoUsuarioDto dto, ITipoUsuarioService service) =>
         {
-            if (string.IsNullOrWhiteSpace(dto.Nombre))
-                return Results.BadRequest(new { codigo = 400, mensaje = "El nombre es requerido" });
+            var (ok, error, data) = await service.CreateAsync(dto);
 
-            var existe = await db.TiposUsuario.AnyAsync(t => t.Nombre == dto.Nombre);
-            if (existe)
-                return Results.Conflict(new { codigo = 409, mensaje = $"El tipo de usuario '{dto.Nombre}' ya existe" });
+            if (!ok)
+            {
+                // Determinar si es error de duplicado (409) o de validación (400)
+                if (error.Contains("ya existe"))
+                    return Results.Conflict(new { codigo = 409, mensaje = error });
 
-            var tipo = new TipoUsuario { Nombre = dto.Nombre };
-            db.TiposUsuario.Add(tipo);
-            await db.SaveChangesAsync();
+                return Results.BadRequest(new { codigo = 400, mensaje = error });
+            }
 
-            return Results.Created($"/api/TipoUsuario/{tipo.Id}", new
+            return Results.Created($"/api/TipoUsuario/{data?.Id}", new
             {
                 codigo = 201,
-                mensaje = $"Tipo de usuario '{tipo.Nombre}' creado exitosamente con ID {tipo.Id}",
-                data = new TipoUsuarioDto { Id = tipo.Id, Nombre = tipo.Nombre }
+                mensaje = "Tipo de usuario creado exitosamente",
+                data = data
             });
         });
 
         // PUT /api/TipoUsuario/{id} - Actualizar
-        group.MapPut("/{id}", async (int id, [FromBody] CrearTipoUsuarioDto dto, ApplicationDbContext db) =>
+        group.MapPut("/{id}", async (int id, [FromBody] CrearTipoUsuarioDto dto, ITipoUsuarioService service) =>
         {
-            if (string.IsNullOrWhiteSpace(dto.Nombre))
-                return Results.BadRequest(new { codigo = 400, mensaje = "El nombre es requerido" });
+            var (ok, error, data) = await service.UpdateAsync(id, dto);
 
-            var tipo = await db.TiposUsuario.FindAsync(id);
-            if (tipo == null)
-                return Results.NotFound(new { codigo = 404, mensaje = $"Tipo de usuario con ID {id} no encontrado" });
+            if (!ok)
+            {
+                if (error.Contains("encontrado"))
+                    return Results.NotFound(new { codigo = 404, mensaje = error });
 
-            var existe = await db.TiposUsuario.AnyAsync(t => t.Nombre == dto.Nombre && t.Id != id);
-            if (existe)
-                return Results.Conflict(new { codigo = 409, mensaje = $"Ya existe otro tipo con el nombre '{dto.Nombre}'" });
+                if (error.Contains("ya existe"))
+                    return Results.Conflict(new { codigo = 409, mensaje = error });
 
-            var nombreAnterior = tipo.Nombre;  // ← Guardar el valor anterior
-            tipo.Nombre = dto.Nombre;
-            await db.SaveChangesAsync();
+                return Results.BadRequest(new { codigo = 400, mensaje = error });
+            }
 
             return Results.Ok(new
             {
                 codigo = 200,
-                mensaje = $"Tipo de usuario actualizado exitosamente. Se cambió de '{nombreAnterior}' a '{tipo.Nombre}'",
-                anterior = nombreAnterior,
-                nuevo = tipo.Nombre,
-                data = new TipoUsuarioDto { Id = tipo.Id, Nombre = tipo.Nombre }
+                mensaje = $"Tipo de usuario actualizado exitosamente. {error}",
+                anterior = error.Split("'")[1] ?? "",
+                nuevo = error.Split("'")[3] ?? "",
+                data = data
             });
         });
 
         // DELETE /api/TipoUsuario/{id} - Eliminar
-        group.MapDelete("/{id}", async (int id, ApplicationDbContext db) =>
+        group.MapDelete("/{id}", async (int id, ITipoUsuarioService service) =>
         {
-            var tipo = await db.TiposUsuario.FindAsync(id);
-            if (tipo == null)
-                return Results.NotFound(new { codigo = 404, mensaje = $"Tipo de usuario con ID {id} no encontrado" });
+            var (ok, error) = await service.DeleteAsync(id);
 
-            var nombreEliminado = tipo.Nombre;  // ← Guardar el valor antes de eliminar
-            db.TiposUsuario.Remove(tipo);
-            await db.SaveChangesAsync();
+            if (!ok)
+                return Results.NotFound(new { codigo = 404, mensaje = error });
 
-            return Results.Ok(new
-            {
-                codigo = 200,
-                mensaje = $"Tipo de usuario '{nombreEliminado}' (ID: {id}) eliminado exitosamente",
-                eliminado = nombreEliminado,
-                id = id
-            });
+            return Results.Ok(new { codigo = 200, mensaje = error });
         });
 
         // GET /api/TipoUsuario/validar/{nombre} - Validar existencia
-        group.MapGet("/validar/{nombre}", async (string nombre, ApplicationDbContext db) =>
+        group.MapGet("/validar/{nombre}", async (string nombre, ITipoUsuarioService service) =>
         {
-            var existe = await db.TiposUsuario.AnyAsync(t => t.Nombre == nombre);
+            var existe = await service.ValidarExistenciaAsync(nombre);
             if (existe)
                 return Results.Ok(new { existe = true, mensaje = "Tipo válido" });
             else
