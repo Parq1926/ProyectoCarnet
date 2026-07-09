@@ -13,13 +13,16 @@ public class TipoIdentificacionService : ITipoIdentificacionService
 {
     private readonly HttpClient _httpClient;
     private readonly IAuthService _authService;
+    private readonly IConfiguration _configuration;
 
     public TipoIdentificacionService(
         HttpClient httpClient,
-        IAuthService authService)
+        IAuthService authService,
+        IConfiguration configuration)
     {
         _httpClient = httpClient;
         _authService = authService;
+        _configuration = configuration;
     }
 
     public async Task<TipoIdentificacionDto?> GetById(int id)
@@ -35,9 +38,12 @@ public class TipoIdentificacionService : ITipoIdentificacionService
                     "Bearer",
                     token);
 
+            var tipoIdentificacionUrl =
+                _configuration["Services:TipoIdentificacion"];
+
             var response =
                 await _httpClient.GetAsync(
-                    $"http://localhost:5231/api/TipoIdentificacion/{id}");
+                    $"{tipoIdentificacionUrl}/api/TipoIdentificacion/{id}");
 
             Console.WriteLine($"STATUS: {response.StatusCode}");
 

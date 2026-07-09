@@ -13,13 +13,16 @@ public class TipoUsuarioService : ITipoUsuarioService
 {
     private readonly HttpClient _httpClient;
     private readonly IAuthService _authService;
+    private readonly IConfiguration _configuration;
 
     public TipoUsuarioService(
         HttpClient httpClient,
-        IAuthService authService)
+        IAuthService authService,
+        IConfiguration configuration)
     {
         _httpClient = httpClient;
         _authService = authService;
+        _configuration = configuration;
     }
 
     public async Task<TipoUsuarioDto?> GetById(int id)
@@ -35,9 +38,11 @@ public class TipoUsuarioService : ITipoUsuarioService
                     "Bearer",
                     token);
 
+            var tipoUsuarioUrl = _configuration["Services:TipoUsuario"];
+
             var response =
                 await _httpClient.GetAsync(
-                    $"http://localhost:5017/api/TipoUsuario/{id}");
+                    $"{tipoUsuarioUrl}/api/TipoUsuario/{id}");
 
             Console.WriteLine($"STATUS: {response.StatusCode}");
 

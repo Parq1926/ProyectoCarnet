@@ -14,8 +14,9 @@ public class BitacoraService
         _httpClient = httpClient;
 
         _bitacoraUrl =
-            configuration["BitacoraUrl"]
-            ?? "http://localhost:5209/bitacora";
+            configuration["Services:Bitacora"]
+            ?? throw new InvalidOperationException(
+                "La configuración Services:Bitacora no existe.");
     }
 
     public async Task Registrar(

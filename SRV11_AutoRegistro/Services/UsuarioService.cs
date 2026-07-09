@@ -68,6 +68,8 @@ namespace SRV11_AutoRegistro.Services
                 );
             }
 
+            var nombreTipo = tipoUsuario.Nombre.Trim();
+
             if (usuario.TipoIdentificacionId <= 0)
                 return (false, "Debe indicar un tipo de identificación", null);
 
@@ -102,8 +104,7 @@ namespace SRV11_AutoRegistro.Services
             if (string.IsNullOrWhiteSpace(usuario.Contrasena))
                 return (false, "La contraseña es requerida", null);
 
-            // Validación estudiante
-            if (usuario.TipoUsuarioId == 1)
+            if (nombreTipo.Equals("Estudiante", StringComparison.OrdinalIgnoreCase))
             {
                 if (usuario.CarrerasAsociadas == null ||
                     !usuario.CarrerasAsociadas.Any())
@@ -115,7 +116,7 @@ namespace SRV11_AutoRegistro.Services
             }
 
             // Validación funcionario
-            if (usuario.TipoUsuarioId == 4)
+            if (nombreTipo.Equals("Funcionario", StringComparison.OrdinalIgnoreCase))
             {
                 if (usuario.AreasAsociadas == null ||
                     !usuario.AreasAsociadas.Any())
@@ -180,12 +181,11 @@ namespace SRV11_AutoRegistro.Services
                 );
             }
 
-            if (usuario.TipoUsuarioId == 3)
+            if (nombreTipo.Equals("Estudiante", StringComparison.OrdinalIgnoreCase))
             {
                 foreach (var carreraId in usuario.CarrerasAsociadas)
                 {
-                    var carrera =
-                        await _carreraService.GetById(carreraId);
+                    var carrera = await _carreraService.GetById(carreraId);
 
                     if (carrera is null)
                     {
@@ -198,7 +198,7 @@ namespace SRV11_AutoRegistro.Services
                 }
             }
 
-            if (usuario.TipoUsuarioId == 2)
+            if (nombreTipo.Equals("Funcionario", StringComparison.OrdinalIgnoreCase))
             {
                 foreach (var areaId in usuario.AreasAsociadas)
                 {
@@ -235,8 +235,10 @@ namespace SRV11_AutoRegistro.Services
             usuario.ID = usuarioId;
 
 
+            var apiUrl = _configuration["Services:AutoRegistro"];
+
             var enlaceConfirmacion =
-                $"http://localhost:5221/autoregistro/confirmar/{token}";
+                $"{apiUrl}/autoregistro/confirmar/{token}";
 
             await _emailService.EnviarCorreoConfirmacionAsync(
                 usuario.Email,

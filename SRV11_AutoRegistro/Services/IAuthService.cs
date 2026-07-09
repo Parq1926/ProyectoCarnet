@@ -10,17 +10,24 @@ public interface IAuthService
 public class AuthService : IAuthService
 {
     private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
 
-    public AuthService(HttpClient httpClient)
+    public AuthService(
+        HttpClient httpClient,
+        IConfiguration configuration)
     {
         _httpClient = httpClient;
+        _configuration = configuration;
     }
 
     public async Task<string?> ObtenerTokenAsync()
     {
+        var loginUrl =
+            $"{_configuration["Services:Login"]}/api/Auth/login";
+
         var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "http://localhost:5129/api/Auth/login");
+            loginUrl);
 
         request.Headers.Add(
             "usuario",

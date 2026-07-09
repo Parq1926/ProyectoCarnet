@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace SRV11_AutoRegistro.Services;
 
@@ -10,18 +11,36 @@ public interface ICarreraService
 public class CarreraService : ICarreraService
 {
     private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
+    private readonly IAuthService _authService;
 
-    public CarreraService(HttpClient httpClient)
+    public CarreraService(
+        HttpClient httpClient,
+        IConfiguration configuration,
+        IAuthService authService)
     {
         _httpClient = httpClient;
+        _configuration = configuration;
+        _authService = authService;
     }
+
 
     public async Task<CarreraDto?> GetById(int id)
     {
         try
         {
+            var carreraUrl = _configuration["Services:Carrera"];
+
+            var token = await _authService.ObtenerTokenAsync();
+
+            if (string.IsNullOrEmpty(token))
+                return null;
+
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
             return await _httpClient.GetFromJsonAsync<CarreraDto>(
-                $"http://localhost:7003/carreras/{id}");
+                $"{carreraUrl}/carreras/{id}");
         }
         catch
         {

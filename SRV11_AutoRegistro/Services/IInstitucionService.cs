@@ -11,13 +11,16 @@ public class InstitucionService : IInstitucionService
 {
     private readonly HttpClient _httpClient;
     private readonly IAuthService _authService;
+    private readonly IConfiguration _configuration;
 
     public InstitucionService(
         HttpClient httpClient,
-        IAuthService authService)
+        IAuthService authService,
+        IConfiguration configuration)
     {
         _httpClient = httpClient;
         _authService = authService;
+        _configuration = configuration;
     }
 
     public async Task<InstitucionDto?> GetById(int id)
@@ -29,9 +32,10 @@ public class InstitucionService : IInstitucionService
 
         _httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+        var institucionUrl = _configuration["Services:Institucion"];
 
         return await _httpClient.GetFromJsonAsync<InstitucionDto>(
-            $"http://localhost:7002/institucion/{id}");
+            $"{institucionUrl}/institucion/{id}");
     }
 }
 

@@ -6,10 +6,14 @@ namespace RolSRV8.Services;
 public class BitacoraClient : IBitacoraClient
 {
     private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
 
-    public BitacoraClient(HttpClient httpClient)
+    public BitacoraClient(
+        HttpClient httpClient,
+        IConfiguration configuration)
     {
         _httpClient = httpClient;
+        _configuration = configuration;
     }
 
     public async Task RegistrarAsync(
@@ -22,9 +26,11 @@ public class BitacoraClient : IBitacoraClient
                 "Bearer",
                 token);
 
+        var bitacoraUrl = _configuration["Services:Bitacora"];
+
         await _httpClient.PostAsJsonAsync(
-            "http://localhost:5209/bitacora",
-            new
+            bitacoraUrl,
+                    new
             {
                 Usuario = usuario,
                 Accion = accion
