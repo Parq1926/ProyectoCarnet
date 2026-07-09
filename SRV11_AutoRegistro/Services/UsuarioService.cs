@@ -180,7 +180,7 @@ namespace SRV11_AutoRegistro.Services
                 );
             }
 
-            if (usuario.TipoUsuarioId == 1)
+            if (usuario.TipoUsuarioId == 3)
             {
                 foreach (var carreraId in usuario.CarrerasAsociadas)
                 {
@@ -198,7 +198,7 @@ namespace SRV11_AutoRegistro.Services
                 }
             }
 
-            if (usuario.TipoUsuarioId == 4)
+            if (usuario.TipoUsuarioId == 2)
             {
                 foreach (var areaId in usuario.AreasAsociadas)
                 {

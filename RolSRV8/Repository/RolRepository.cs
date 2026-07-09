@@ -1,41 +1,113 @@
-﻿using RolSRV8.Data;
+﻿using Dapper;
 using RolSRV8.Entities;
 
 namespace RolSRV8.Repository;
 
 public class RolRepository
 {
-    private readonly RolDbContext _context;
+    private readonly IDbConnectionFactory _db;
 
-    public RolRepository(RolDbContext context)
+    public RolRepository(IDbConnectionFactory db)
     {
-        _context = context;
+        _db = db;
     }
 
-    public async Task Guardar(Rol rol)
+    public async Task<IEnumerable<Rol>> ObtenerTodosAsync()
     {
-        _context.Roles.Add(rol);
-        await _context.SaveChangesAsync();
+        using var conn = _db.CreateConnection();
+
+        return await conn.QueryAsync<Rol>(
+        @"
+        SELECT
+            ID AS Id,
+            NOMBRE AS Nombre,
+            PANTALLAS AS Pantallas
+        FROM ROL
+        ORDER BY ID");
     }
 
-    public List<Rol> ObtenerTodos()
+    public async Task<Rol?> ObtenerPorIdAsync(int id)
     {
-        return _context.Roles.ToList();
+        using var conn = _db.CreateConnection();
+
+        return await conn.QueryFirstOrDefaultAsync<Rol>(
+        @"
+        SELECT
+            ID AS Id,
+            NOMBRE AS Nombre,
+            PANTALLAS AS Pantallas
+        FROM ROL
+        WHERE ID = @id",
+        new { id });
     }
 
-    public Rol? ObtenerPorId(int id)
+    public async Task<int> CrearAsync(Rol rol)
     {
-        return _context.Roles.FirstOrDefault(x => x.Id == id);
+        using var conn = _db.CreateConnection();
+
+        return await conn.ExecuteAsync(
+        @"
+        INSERT INTO ROL
+        (
+            NOMBRE,
+            PANTALLAS
+        )
+        VALUES
+        (
+            @Nombre,
+            @Pantallas
+        )",
+        rol);
     }
 
-    public async Task Actualizar()
+    public async Task<int> ActualizarAsync(Rol rol)
     {
-        await _context.SaveChangesAsync();
+        using var conn = _db.CreateConnection();
+
+        return await conn.ExecuteAsync(
+        @"
+        UPDATE ROL
+        SET
+            NOMBRE = @Nombre,
+            PANTALLAS = @Pantallas
+        WHERE ID = @Id",
+        rol);
     }
 
-    public async Task Eliminar(Rol rol)
+    public async Task<int> EliminarAsync(int id)
     {
-        _context.Roles.Remove(rol);
-        await _context.SaveChangesAsync();
+        using var conn = _db.CreateConnection();
+
+        return await conn.ExecuteAsync(
+        @"
+        DELETE FROM ROL
+        WHERE ID = @id",
+        new { id });
+    }
+
+    public async Task<bool> TieneUsuariosAsync(int id)
+    {
+        using var conn = _db.CreateConnection();
+
+        var cantidad = await conn.ExecuteScalarAsync<int>(
+        @"
+    SELECT COUNT(*)
+    FROM USUARIO
+    WHERE ROL_ID = @id",
+        new { id });
+
+        return cantidad > 0;
+    }
+
+    public async Task<int> ContarUsuariosAsync(int id)
+    {
+        using var conn = _db.CreateConnection();
+
+        return await conn.ExecuteScalarAsync<int>(
+        @"
+    SELECT COUNT(*)
+    FROM USUARIO
+    WHERE ROL_ID = @id",
+        new { id });
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace BitacoraSRV9.Repository;
+namespace RolSRV8.Repository;
 
 public interface IDbConnectionFactory
 {
@@ -19,14 +19,7 @@ public class DbConnectionFactory : IDbConnectionFactory
 
     public IDbConnection CreateConnection()
     {
-        var connectionString =
-            _configuration.GetConnectionString("DefaultConnection");
-
-        Console.WriteLine("================================");
-        Console.WriteLine("CONNECTION STRING UTILIZADA:");
-        Console.WriteLine(connectionString);
-        Console.WriteLine("================================");
-
-        return new SqlConnection(connectionString);
+        return new SqlConnection(
+            _configuration.GetConnectionString("DefaultConnection"));
     }
 }
