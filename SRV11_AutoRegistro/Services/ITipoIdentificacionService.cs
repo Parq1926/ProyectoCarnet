@@ -1,79 +1,158 @@
-﻿using System.Net.Http.Json;
-using System.Net.Http.Headers;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace SRV11_AutoRegistro.Services;
 
 public interface ITipoIdentificacionService
 {
     Task<TipoIdentificacionDto?> GetById(int id);
+    Task<List<TipoIdentificacionDto>> GetAll();
 }
 
 public class TipoIdentificacionService : ITipoIdentificacionService
 {
     private readonly HttpClient _httpClient;
-    private readonly IAuthService _authService;
     private readonly IConfiguration _configuration;
+
 
     public TipoIdentificacionService(
         HttpClient httpClient,
-        IAuthService authService,
         IConfiguration configuration)
     {
         _httpClient = httpClient;
-        _authService = authService;
         _configuration = configuration;
     }
 
+
     public async Task<TipoIdentificacionDto?> GetById(int id)
     {
+        Console.WriteLine("========== GET TIPO IDENTIFICACION POR ID ==========");
+        Console.WriteLine($"ID recibido: {id}");
+
         try
         {
-            var token = await _authService.ObtenerTokenAsync();
-
-            Console.WriteLine($"TOKEN: {token}");
-
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue(
-                    "Bearer",
-                    token);
+            if (id <= 0)
+            {
+                Console.WriteLine("❌ ID inválido");
+                return null;
+            }
 
             var tipoIdentificacionUrl =
                 _configuration["Services:TipoIdentificacion"];
 
-            var response =
-                await _httpClient.GetAsync(
-                    $"{tipoIdentificacionUrl}/api/TipoIdentificacion/{id}");
+            if (string.IsNullOrWhiteSpace(tipoIdentificacionUrl))
+            {
+                Console.WriteLine("❌ No existe configuración Services:TipoIdentificacion");
+                return null;
+            }
 
-            Console.WriteLine($"STATUS: {response.StatusCode}");
+            var url = $"{tipoIdentificacionUrl}/api/TipoIdentificacion";
 
-            var contenido =
-                await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"URL llamada: {url}");
 
-            Console.WriteLine($"CONTENIDO: {contenido}");
+            var response = await _httpClient.GetAsync(url);
+
+            Console.WriteLine($"Status HTTP: {response.StatusCode}");
 
             if (!response.IsSuccessStatusCode)
                 return null;
 
-            using var document =
-                JsonDocument.Parse(contenido);
+            var contenido = await response.Content.ReadAsStringAsync();
 
-            var data =
-                document.RootElement.GetProperty("data");
+            Console.WriteLine("Respuesta recibida:");
+            Console.WriteLine(contenido);
 
-            return new TipoIdentificacionDto
+            using var document = JsonDocument.Parse(contenido);
+
+            if (!document.RootElement.TryGetProperty("data", out var data))
             {
-                ID = data.GetProperty("id").GetInt32(),
-                Nombre = data.GetProperty("nombre").GetString() ?? ""
-            };
+                Console.WriteLine("❌ No existe la propiedad data");
+                return null;
+            }
+
+            foreach (var item in data.EnumerateArray())
+            {
+                var tipoId = item.GetProperty("id").GetInt32();
+
+                if (tipoId == id)
+                {
+                    var nombre = item.GetProperty("nombre").GetString() ?? "";
+
+                    Console.WriteLine($"✅ Tipo encontrado: {tipoId} - {nombre}");
+
+                    return new TipoIdentificacionDto
+                    {
+                        ID = tipoId,
+                        Nombre = nombre
+                    };
+                }
+            }
+
+            Console.WriteLine($"❌ No se encontró el tipo de identificación {id}");
+
+            return null;
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            Console.WriteLine($"❌ Error TipoIdentificacionService: {ex.Message}");
             return null;
         }
     }
+
+
+
+    public async Task<List<TipoIdentificacionDto>> GetAll()
+    {
+        try
+        {
+            var tipoIdentificacionUrl =
+                _configuration["Services:TipoIdentificacion"];
+
+
+            var response = await _httpClient.GetAsync(
+                $"{tipoIdentificacionUrl}/api/TipoIdentificacion");
+
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+                return new List<TipoIdentificacionDto>();
+            }
+
+
+            var contenido =
+                await response.Content.ReadAsStringAsync();
+
+
+            using var document =
+                JsonDocument.Parse(contenido);
+
+
+            var lista =
+                new List<TipoIdentificacionDto>();
+
+
+            foreach (var item in document.RootElement.GetProperty("data").EnumerateArray())
+            {
+                lista.Add(new TipoIdentificacionDto
+                {
+                    ID = item.GetProperty("id").GetInt32(),
+                    Nombre = item.GetProperty("nombre").GetString() ?? ""
+                });
+            }
+
+
+            return lista;
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error TipoIdentificacionService.GetAll: {ex}");
+            return new List<TipoIdentificacionDto>();
+        }
+    }
 }
+
+
 
 public class TipoIdentificacionDto
 {

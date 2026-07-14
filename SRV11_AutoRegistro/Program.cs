@@ -3,6 +3,7 @@ using SRV11_AutoRegistro.Services;
 using SRV11_AutoRegistro.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddRazorPages();
 
 builder.Services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
 
@@ -14,7 +15,7 @@ builder.Services.AddScoped<UsuarioAreaRepository>();
 builder.Services.AddScoped<UsuarioInstitucionRepository>();
 builder.Services.AddScoped<UsuarioTelefonoRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-
+builder.Services.AddScoped<IRolService, RolService>();
 
 
 
@@ -32,6 +33,12 @@ builder.Services.AddHttpClient<ITipoIdentificacionService,TipoIdentificacionServ
 builder.Services.AddHttpClient<IAuthService, AuthService>();
 
 var app = builder.Build();
+
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.MapRazorPages();
 
 app.MapAutoRegistroEndpoints();
 

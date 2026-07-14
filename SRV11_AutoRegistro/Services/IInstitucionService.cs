@@ -1,43 +1,118 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
+﻿using System.Text.Json;
 
 namespace SRV11_AutoRegistro.Services;
+
 
 public interface IInstitucionService
 {
     Task<InstitucionDto?> GetById(int id);
+    Task<List<InstitucionDto>> GetAll();
 }
+
+
+
 public class InstitucionService : IInstitucionService
 {
+
     private readonly HttpClient _httpClient;
-    private readonly IAuthService _authService;
     private readonly IConfiguration _configuration;
+
 
     public InstitucionService(
         HttpClient httpClient,
-        IAuthService authService,
         IConfiguration configuration)
     {
         _httpClient = httpClient;
-        _authService = authService;
         _configuration = configuration;
     }
 
+
+
     public async Task<InstitucionDto?> GetById(int id)
     {
-        var token = await _authService.ObtenerTokenAsync();
+        try
+        {
+            var institucionUrl = _configuration["Services:Institucion"];
 
-        if (string.IsNullOrEmpty(token))
+
+            var response = await _httpClient.GetAsync(
+                $"{institucionUrl}/institucion/{id}");
+
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+
+            return await response.Content.ReadFromJsonAsync<InstitucionDto>();
+
+        }
+        catch
+        {
             return null;
-
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
-        var institucionUrl = _configuration["Services:Institucion"];
-
-        return await _httpClient.GetFromJsonAsync<InstitucionDto>(
-            $"{institucionUrl}/institucion/{id}");
+        }
     }
+
+
+
+    public async Task<List<InstitucionDto>> GetAll()
+    {
+
+        try
+        {
+
+            var institucionUrl =
+                _configuration["Services:Institucion"];
+
+
+            var response = await _httpClient.GetAsync(
+                $"{institucionUrl}/institucion");
+
+
+            if (!response.IsSuccessStatusCode)
+                return new List<InstitucionDto>();
+
+
+            var contenido =
+                await response.Content.ReadAsStringAsync();
+
+
+            using var document =
+                JsonDocument.Parse(contenido);
+
+
+            var lista =
+                new List<InstitucionDto>();
+
+
+            foreach (var item in document.RootElement.EnumerateArray())
+            {
+
+                lista.Add(new InstitucionDto
+                {
+                    ID = item.GetProperty("id").GetInt32(),
+                    Nombre = item.GetProperty("nombre").GetString() ?? "",
+                    Dominios = item.GetProperty("dominios").GetString() ?? ""
+                });
+
+            }
+
+
+            return lista;
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(
+                $"Error InstitucionService.GetAll: {ex.Message}");
+
+            return new List<InstitucionDto>();
+        }
+
+    }
+
 }
+
+
 
 public class InstitucionDto
 {

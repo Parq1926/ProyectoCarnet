@@ -1,27 +1,24 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
+﻿using System.Text.Json;
 
 namespace SRV11_AutoRegistro.Services;
 
 public interface ICarreraService
 {
     Task<CarreraDto?> GetById(int id);
+    Task<List<CarreraDto>> GetAll();
 }
 
 public class CarreraService : ICarreraService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
-    private readonly IAuthService _authService;
 
     public CarreraService(
         HttpClient httpClient,
-        IConfiguration configuration,
-        IAuthService authService)
+        IConfiguration configuration)
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _authService = authService;
     }
 
 
@@ -31,23 +28,66 @@ public class CarreraService : ICarreraService
         {
             var carreraUrl = _configuration["Services:Carrera"];
 
-            var token = await _authService.ObtenerTokenAsync();
+            var response = await _httpClient.GetAsync(
+                $"{carreraUrl}/carreras/{id}");
 
-            if (string.IsNullOrEmpty(token))
+            if (!response.IsSuccessStatusCode)
                 return null;
 
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
 
-            return await _httpClient.GetFromJsonAsync<CarreraDto>(
-                $"{carreraUrl}/carreras/{id}");
+            return await response.Content.ReadFromJsonAsync<CarreraDto>();
         }
         catch
         {
             return null;
         }
     }
+
+
+    public async Task<List<CarreraDto>> GetAll()
+    {
+        try
+        {
+            var carreraUrl = _configuration["Services:Carrera"];
+
+            var response = await _httpClient.GetAsync(
+                $"{carreraUrl}/carreras");
+
+
+            if (!response.IsSuccessStatusCode)
+                return new List<CarreraDto>();
+
+
+            var contenido = await response.Content.ReadAsStringAsync();
+
+
+            using var document = JsonDocument.Parse(contenido);
+
+
+            var lista = new List<CarreraDto>();
+
+
+            foreach (var item in document.RootElement.EnumerateArray())
+            {
+                lista.Add(new CarreraDto
+                {
+                    ID = item.GetProperty("id").GetInt32(),
+                    Nombre = item.GetProperty("nombre").GetString() ?? "",
+                    InstitucionID = item.GetProperty("institucionID").GetInt32()
+                });
+            }
+
+
+            return lista;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error CarreraService.GetAll: {ex.Message}");
+            return new List<CarreraDto>();
+        }
+    }
 }
+
 
 public class CarreraDto
 {

@@ -124,5 +124,64 @@ namespace SRV11_AutoRegistro.Repository
                 WHERE ID = @id",
                 new { id });
         }
+
+        public async Task EliminarUsuarioPendienteAsync(int id)
+        {
+            using var conn = _db.CreateConnection();
+
+            conn.Open();
+
+            using var transaction = conn.BeginTransaction();
+
+            try
+            {
+                await conn.ExecuteAsync(
+                    @"
+            DELETE FROM USUARIO_TELEFONO
+            WHERE USUARIO_ID = @id",
+                    new { id },
+                    transaction);
+
+
+                await conn.ExecuteAsync(
+                    @"
+            DELETE FROM USUARIO_CARRERA
+            WHERE USUARIO_ID = @id",
+                    new { id },
+                    transaction);
+
+
+                await conn.ExecuteAsync(
+                    @"
+            DELETE FROM USUARIO_AREA
+            WHERE USUARIO_ID = @id",
+                    new { id },
+                    transaction);
+
+
+                await conn.ExecuteAsync(
+                    @"
+            DELETE FROM USUARIO_INSTITUCION
+            WHERE USUARIO_ID = @id",
+                    new { id },
+                    transaction);
+
+
+                await conn.ExecuteAsync(
+                    @"
+            DELETE FROM USUARIO
+            WHERE ID = @id",
+                    new { id },
+                    transaction);
+
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
     }
 }

@@ -12,6 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Carnet Digital CUC</title>
     <link rel="stylesheet" href="~/css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="login-container">
@@ -30,13 +31,13 @@
             <form id="loginForm" class="login-form" onsubmit="return false;">
                 <div class="form-group">
                     <label for="Usuario">Usuario (Email)</label>
-                    <input type="email" id="Usuario" name="Usuario" class="form-control" 
+                    <input type="email" id="Usuario" name="Usuario" class="form-control"
                            placeholder="ejemplo@cuc.ac.cr" required />
                 </div>
 
                 <div class="form-group">
                     <label for="Contrasena">Contraseña</label>
-                    <input type="password" id="Contrasena" name="Contrasena" class="form-control" 
+                    <input type="password" id="Contrasena" name="Contrasena" class="form-control"
                            placeholder="Ingrese su contraseña" required />
                 </div>
 
@@ -54,108 +55,124 @@
             </form>
 
             <div class="footer">
+                <!-- ✅ BOTÓN REGISTRARME DENTRO DEL FOOTER -->
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+                    <p style="color: #666; font-size: 14px; margin-bottom: 8px;">¿No tienes una cuenta?</p>
+                    <a href="http://localhost:5221/autoregistro" target="_blank"
+                       style="display: inline-block; padding: 10px 30px;
+                        background: linear-gradient(135deg, #28a745, #20c997);
+                        color: white; border: none; border-radius: 25px;
+                        text-decoration: none; font-weight: 600; font-size: 15px;
+                        transition: all 0.3s ease; box-shadow: 0 2px 10px rgba(40,167,69,0.3);">
+                        <i class="fas fa-user-plus"></i> Registrarme
+                    </a>
+                    <p style="color: #999; font-size: 11px; margin-top: 6px;">
+                        Serás redirigido al sistema de auto-registro
+                    </p>
+                </div>
+
                 <p>© @DateTime.Now.Year - Carnet Digital CUC</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Mostrar mensaje de redirección si existe
-        document.addEventListener('DOMContentLoaded', function() {
-            const redirectMsg = localStorage.getItem('redirectMessage');
-            if (redirectMsg) {
-                const redirectDiv = document.getElementById('redirectMessage');
-                redirectDiv.textContent = redirectMsg;
-                redirectDiv.style.display = 'block';
-                localStorage.removeItem('redirectMessage');
-            }
-
-            // Verificar si el token existe pero está expirado
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                // Si hay token, redirigir a Welcome (el layout lo maneja)
-                window.location.href = '/Welcome';
-            }
-        });
-
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const usuario = document.getElementById('Usuario').value;
-            const contrasena = document.getElementById('Contrasena').value;
-            const tipo = document.getElementById('Tipo').value;
-
-            const redirectDiv = document.getElementById('redirectMessage');
-            const errorDiv = document.getElementById('errorMessage');
-            const successDiv = document.getElementById('successMessage');
-            
-            redirectDiv.style.display = 'none';
-            errorDiv.style.display = 'none';
-            successDiv.style.display = 'none';
-
-            if (!usuario || !contrasena || !tipo) {
-                errorDiv.textContent = 'Todos los campos son requeridos';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            const btn = document.getElementById('btnLogin');
-            btn.disabled = true;
-            btn.textContent = 'Cargando...';
-
-            try {
-                const response = await fetch('/api/Auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        Usuario: usuario,
-                        Contrasena: contrasena,
-                        Tipo: tipo
-                    })
-                });
-
-                const data = await response.json();
-                console.log('Respuesta:', data);
-
-                if (data.codigo === 200) {
-                    // ✅ Login exitoso
-                    localStorage.setItem('accessToken', data.accessToken);
-                    localStorage.setItem('refreshToken', data.refreshToken);
-                    localStorage.setItem('usuarioId', data.usuarioId);
-                    localStorage.setItem('usuarioEmail', usuario);
-                    localStorage.setItem('usuarioTipo', tipo);
-                    localStorage.setItem('nombreCompleto', usuario);
-                    
-                    successDiv.textContent = 'Login exitoso. Redirigiendo...';
-                    successDiv.style.display = 'block';
-
-                    setTimeout(function() {
-                        window.location.href = '/Welcome';
-                    }, 500);
-                    
-                } else if (data.codigo === 403) {
-                    // Usuario bloqueado - Mostrar mensaje y permitir otro intento
-                    errorDiv.textContent = data.mensaje || 'Usuario bloqueado permanentemente. Contacte al administrador.';
-                    errorDiv.style.display = 'block';
-                    
-                    //NO deshabilitar el formulario - permitir probar otro usuario
-                    // Solo mostrar el mensaje de bloqueo
-                    
-                } else {
-                    errorDiv.textContent = data.mensaje || 'Error al iniciar sesión';
-                    errorDiv.style.display = 'block';
+            // Mostrar mensaje de redirección si existe
+            document.addEventListener('DOMContentLoaded', function() {
+                const redirectMsg = localStorage.getItem('redirectMessage');
+                if (redirectMsg) {
+                    const redirectDiv = document.getElementById('redirectMessage');
+                    redirectDiv.textContent = redirectMsg;
+                    redirectDiv.style.display = 'block';
+                    localStorage.removeItem('redirectMessage');
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                errorDiv.textContent = 'Error de conexión: ' + error.message;
-                errorDiv.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Iniciar Sesión';
-            }
-        });
+
+                // Verificar si el token existe pero está expirado
+                const token = localStorage.getItem('accessToken');
+                if (token) {
+                    // Si hay token, redirigir a Welcome (el layout lo maneja)
+                    window.location.href = '/Welcome';
+                }
+            });
+
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const usuario = document.getElementById('Usuario').value;
+                const contrasena = document.getElementById('Contrasena').value;
+                const tipo = document.getElementById('Tipo').value;
+
+                const redirectDiv = document.getElementById('redirectMessage');
+                const errorDiv = document.getElementById('errorMessage');
+                const successDiv = document.getElementById('successMessage');
+
+                redirectDiv.style.display = 'none';
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+
+                if (!usuario || !contrasena || !tipo) {
+                    errorDiv.textContent = 'Todos los campos son requeridos';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                const btn = document.getElementById('btnLogin');
+                btn.disabled = true;
+                btn.textContent = 'Cargando...';
+
+                try {
+                    const response = await fetch('/api/Auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            Usuario: usuario,
+                            Contrasena: contrasena,
+                            Tipo: tipo
+                        })
+                    });
+
+                    const data = await response.json();
+                    console.log('Respuesta:', data);
+
+                    if (data.codigo === 200) {
+                        // ✅ Login exitoso
+                        localStorage.setItem('accessToken', data.accessToken);
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                        localStorage.setItem('usuarioId', data.usuarioId);
+                        localStorage.setItem('usuarioEmail', usuario);
+                        localStorage.setItem('usuarioTipo', tipo);
+                        localStorage.setItem('nombreCompleto', usuario);
+
+                        successDiv.textContent = 'Login exitoso. Redirigiendo...';
+                        successDiv.style.display = 'block';
+
+                        setTimeout(function() {
+                            window.location.href = '/Welcome';
+                        }, 500);
+
+                    } else if (data.codigo === 403) {
+                        // Usuario bloqueado - Mostrar mensaje y permitir otro intento
+                        errorDiv.textContent = data.mensaje || 'Usuario bloqueado permanentemente. Contacte al administrador.';
+                        errorDiv.style.display = 'block';
+
+                        //NO deshabilitar el formulario - permitir probar otro usuario
+                        // Solo mostrar el mensaje de bloqueo
+
+                    } else {
+                        errorDiv.textContent = data.mensaje || 'Error al iniciar sesión';
+                        errorDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    errorDiv.textContent = 'Error de conexión: ' + error.message;
+                    errorDiv.style.display = 'block';
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Iniciar Sesión';
+                }
+            });
     </script>
 </body>
 </html>

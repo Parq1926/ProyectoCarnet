@@ -216,10 +216,16 @@ namespace LoginSRV1.Endpoints
             .WithName("RefreshToken");
 
             // Validate
+
             group.MapGet("/validate", async (
-                [FromHeader(Name = "Authorization")] string authorization,
+                [FromHeader(Name = "Authorization")] string? authorization,
                 [FromServices] IConfiguration config) =>
             {
+
+                Console.WriteLine("HEADER RECIBIDO:");
+                Console.WriteLine(authorization);
+
+
                 string? token = null;
                 if (!string.IsNullOrWhiteSpace(authorization) && authorization.StartsWith("Bearer "))
                 {
@@ -275,6 +281,7 @@ namespace LoginSRV1.Endpoints
                 }
             })
             .WithName("ValidateToken");
+
         }
     }
 }

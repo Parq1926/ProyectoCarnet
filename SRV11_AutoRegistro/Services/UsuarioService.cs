@@ -20,6 +20,7 @@ namespace SRV11_AutoRegistro.Services
         private readonly IEmailService _emailService;
         private readonly ITipoUsuarioService _tipoUsuarioService;
         private readonly ITipoIdentificacionService _tipoIdentificacionService;
+        private readonly IRolService _rolService;
 
 
         public UsuarioService(
@@ -34,7 +35,8 @@ namespace SRV11_AutoRegistro.Services
             IConfiguration configuration,
             IEmailService emailService,
             ITipoUsuarioService tipoUsuarioService,
-            ITipoIdentificacionService tipoIdentificacionService)
+            ITipoIdentificacionService tipoIdentificacionService,
+            IRolService rolService)
         {
             _repository = repository;
             _carreraRepository = carreraRepository;
@@ -49,6 +51,7 @@ namespace SRV11_AutoRegistro.Services
             _emailService = emailService;
             _tipoUsuarioService = tipoUsuarioService;
             _tipoIdentificacionService = tipoIdentificacionService;
+            _rolService = rolService;
         }
 
         public async Task<(bool ok, string error, Usuario? usuarioCreado)> RegistrarAsync(Usuario usuario)
@@ -69,6 +72,22 @@ namespace SRV11_AutoRegistro.Services
             }
 
             var nombreTipo = tipoUsuario.Nombre.Trim();
+
+            if (usuario.RolId <= 0)
+            {
+                return (false, "Debe seleccionar un rol", null);
+            }
+
+            var rol = await _rolService.GetById(usuario.RolId);
+
+            if (rol is null)
+            {
+                return (
+                    false,
+                    $"El rol {usuario.RolId} no existe",
+                    null
+                );
+            }
 
             if (usuario.TipoIdentificacionId <= 0)
                 return (false, "Debe indicar un tipo de identificación", null);
@@ -129,8 +148,23 @@ namespace SRV11_AutoRegistro.Services
 
             var existe = await _repository.GetByEmailAsync(usuario.Email);
 
+
             if (existe is not null)
-                return (false, "Ya existe un usuario con ese correo", null);
+            {
+                // Cuenta ya confirmada
+                if (existe.Confirmado)
+                {
+                    return (
+                        false,
+                        "Ya existe una cuenta confirmada con ese correo",
+                        null
+                    );
+                }
+
+
+                // Cuenta pendiente de confirmación
+                await _repository.EliminarUsuarioPendienteAsync(existe.ID);
+            }
 
 
             if (!usuario.Instituciones.Any())

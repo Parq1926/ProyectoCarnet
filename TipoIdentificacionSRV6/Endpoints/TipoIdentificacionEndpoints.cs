@@ -9,27 +9,34 @@ public static class TipoIdentificacionEndpoints
     public static void MapTipoIdentificacionEndpoints(this IEndpointRouteBuilder routes)
     {
         var group = routes.MapGroup("/api/TipoIdentificacion")
-            .WithTags("TipoIdentificacion")
-            .RequireAuthorization();
+            .WithTags("TipoIdentificacion");
 
-        // GET /api/TipoIdentificacion - Listar todos
+
+        // GET /api/TipoIdentificacion 
+        // Público para cargar datos en Autoregistro (SOLO ESTE ES EL QUE ESTA PUBLICO, LOS DEMAS NECESITAN AUTORIZACION)
         group.MapGet("/", async (ITipoIdentificacionService service) =>
         {
             var tipos = await service.GetAllAsync();
             return Results.Ok(new { codigo = 200, mensaje = "OK", data = tipos });
         });
 
-        // GET /api/TipoIdentificacion/{id} - Obtener por ID
+
+        // GET /api/TipoIdentificacion/{id} 
+        // Requiere autenticación
         group.MapGet("/{id}", async (int id, ITipoIdentificacionService service) =>
         {
             var tipo = await service.GetByIdAsync(id);
+
             if (tipo == null)
                 return Results.NotFound(new { codigo = 404, mensaje = $"Tipo de identificación con ID {id} no encontrado" });
 
             return Results.Ok(new { codigo = 200, mensaje = "OK", data = tipo });
-        });
+        })
+        .RequireAuthorization();
 
-        // POST /api/TipoIdentificacion - Crear nuevo
+
+        // POST /api/TipoIdentificacion 
+        // Requiere autenticación
         group.MapPost("/", async ([FromBody] CrearTipoIdentificacionDto dto, ITipoIdentificacionService service) =>
         {
             var (ok, error, data) = await service.CreateAsync(dto);
@@ -48,9 +55,13 @@ public static class TipoIdentificacionEndpoints
                 mensaje = "Tipo de identificación creado exitosamente",
                 data = data
             });
-        });
 
-        // PUT /api/TipoIdentificacion/{id} - Actualizar
+        })
+        .RequireAuthorization();
+
+
+        // PUT /api/TipoIdentificacion/{id}
+        // Requiere autenticación
         group.MapPut("/{id}", async (int id, [FromBody] CrearTipoIdentificacionDto dto, ITipoIdentificacionService service) =>
         {
             var (ok, error, data) = await service.UpdateAsync(id, dto);
@@ -74,9 +85,13 @@ public static class TipoIdentificacionEndpoints
                 nuevo = error.Split("'")[3] ?? "",
                 data = data
             });
-        });
 
-        // DELETE /api/TipoIdentificacion/{id} - Eliminar
+        })
+        .RequireAuthorization();
+
+
+        // DELETE /api/TipoIdentificacion/{id}
+        // Requiere autenticación
         group.MapDelete("/{id}", async (int id, ITipoIdentificacionService service) =>
         {
             var (ok, error) = await service.DeleteAsync(id);
@@ -85,6 +100,8 @@ public static class TipoIdentificacionEndpoints
                 return Results.NotFound(new { codigo = 404, mensaje = error });
 
             return Results.Ok(new { codigo = 200, mensaje = error });
-        });
+
+        })
+        .RequireAuthorization();
     }
 }

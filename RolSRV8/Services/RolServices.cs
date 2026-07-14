@@ -87,8 +87,13 @@ public class RolService : IRolService
                 $"No se puede eliminar el rol porque está asignado a {cantidad} usuario(s)");
         }
 
-
+        await _repository.EliminarAsync(id);
 
         return (true, string.Empty);
+    }
+
+    public async Task<int> ContarUsuariosAsync(int id)
+    {
+        return await _repository.ContarUsuariosAsync(id);
     }
 }

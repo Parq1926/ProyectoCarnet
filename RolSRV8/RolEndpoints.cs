@@ -1,209 +1,193 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RolSRV8.Auth;
-using RolSRV8.Entities;
+﻿using RolSRV8.Entities;
 using RolSRV8.Services;
 
 namespace RolSRV8;
 
 public static class RolEndpoints
 {
-    public static void MapRolEndpoints(
-    this IEndpointRouteBuilder routes)
+    public static void MapRolEndpoints(this IEndpointRouteBuilder routes)
     {
-        routes.MapPost("/rol",
-        async (
-        HttpContext context,
-        RolRequest request,
-        IRolService service,
-        IBitacoraClient bitacoraClient) =>
+        var group = routes.MapGroup("/api/Rol")
+            .WithTags("Rol");
+
+
+        // GET /api/Rol
+        group.MapGet("/", async (IRolService service) =>
         {
-            var token = context.Request.Headers["Authorization"]
-    .ToString()
-    .Replace("Bearer ", "");
-
-        var tokenValidator =
-                    context.RequestServices
-                    .GetRequiredService<ITokenValidator>();
-
-            if (!await tokenValidator.ValidateAsync(token))
-                return Results.Unauthorized();
-
-            var resultado =
-        await service.CrearAsync(request);
-
-            if (!resultado.ok)
-            {
-                return Results.BadRequest(new
-                {
-                    mensaje = resultado.error
-                });
-            }
-
-            await bitacoraClient.RegistrarAsync(
-        "Administrador del Sistema",
-        $"Creó el rol {request.Nombre}",
-        token);
+            var roles = await service.ObtenerTodosAsync();
 
             return Results.Ok(new
             {
-                mensaje = "Rol creado correctamente",
-                nombre = request.Nombre,
-                pantallas = request.Pantallas
+                codigo = 200,
+                mensaje = "OK",
+                data = roles
             });
         });
 
-        routes.MapGet("/rol",
-        async (
-            HttpContext context,
-            IRolService service) =>
-        {
-            var token = context.Request.Headers["Authorization"]
-                .ToString()
-                .Replace("Bearer ", "");
 
-            var tokenValidator =
-                context.RequestServices
-                .GetRequiredService<ITokenValidator>();
 
-            if (!await tokenValidator.ValidateAsync(token))
-                return Results.Unauthorized();
-
-            var lista =
-                await service.ObtenerTodosAsync();
-
-            return Results.Ok(lista);
-        });
-
-        routes.MapGet("/rol/{id}",
-        async (
-            HttpContext context,
+        // GET /api/Rol/{id}
+        group.MapGet("/{id}", async (
             int id,
             IRolService service) =>
         {
-            var token = context.Request.Headers["Authorization"]
-                .ToString()
-                .Replace("Bearer ", "");
-
-            var tokenValidator =
-                context.RequestServices
-                .GetRequiredService<ITokenValidator>();
-
-            if (!await tokenValidator.ValidateAsync(token))
-                return Results.Unauthorized();
-
-            var rol =
-                await service.ObtenerPorIdAsync(id);
+            var rol = await service.ObtenerPorIdAsync(id);
 
             if (rol == null)
             {
                 return Results.NotFound(new
                 {
+                    codigo = 404,
                     mensaje = "Rol no encontrado"
                 });
             }
 
-            return Results.Ok(rol);
+            return Results.Ok(new
+            {
+                codigo = 200,
+                mensaje = "OK",
+                data = rol
+            });
         });
 
-        routes.MapPut("/rol/{id}",
-        async (
-            HttpContext context,
+
+
+        // POST /api/Rol
+        group.MapPost("/", async (
+            RolRequest request,
+            IRolService service,
+            IBitacoraClient bitacoraClient) =>
+        {
+
+            var resultado = await service.CrearAsync(request);
+
+
+            if (!resultado.ok)
+            {
+                return Results.BadRequest(new
+                {
+                    codigo = 400,
+                    mensaje = resultado.error
+                });
+            }
+
+
+            await bitacoraClient.RegistrarAsync(
+                "Administrador del Sistema",
+                $"Creó el rol {request.Nombre}",
+                "");
+
+
+
+            return Results.Created("/api/Rol", new
+            {
+                codigo = 201,
+                mensaje = "Rol creado correctamente",
+                data = new
+                {
+                    nombre = request.Nombre,
+                    pantallas = request.Pantallas
+                }
+            });
+
+        });
+
+
+
+        // PUT /api/Rol/{id}
+        group.MapPut("/{id}", async (
             int id,
             RolRequest request,
             IRolService service,
             IBitacoraClient bitacoraClient) =>
         {
-            var token = context.Request.Headers["Authorization"]
-                .ToString()
-                .Replace("Bearer ", "");
 
-            var tokenValidator =
-                context.RequestServices
-                .GetRequiredService<ITokenValidator>();
+            var resultado = await service.ActualizarAsync(id, request);
 
-            if (!await tokenValidator.ValidateAsync(token))
-                return Results.Unauthorized();
-
-            var resultado =
-                await service.ActualizarAsync(
-                    id,
-                    request);
 
             if (!resultado.ok)
             {
                 return Results.BadRequest(new
                 {
+                    codigo = 400,
                     mensaje = resultado.error
                 });
             }
 
+
+
             await bitacoraClient.RegistrarAsync(
                 "Administrador del Sistema",
                 $"Modificó el rol {request.Nombre}",
-                token);
+                "");
+
+
 
             return Results.Ok(new
             {
+                codigo = 200,
                 mensaje = "Rol actualizado correctamente",
-                id = id,
-                nombre = request.Nombre,
-                pantallas = request.Pantallas
+                data = new
+                {
+                    id,
+                    nombre = request.Nombre,
+                    pantallas = request.Pantallas
+                }
             });
+
         });
 
-        routes.MapDelete("/rol/{id}",
-        async (
-            HttpContext context,
+
+
+        // DELETE /api/Rol/{id}
+        group.MapDelete("/{id}", async (
             int id,
             IRolService service,
             IBitacoraClient bitacoraClient) =>
         {
-            var token = context.Request.Headers["Authorization"]
-                .ToString()
-                .Replace("Bearer ", "");
 
-            var tokenValidator =
-                context.RequestServices
-                .GetRequiredService<ITokenValidator>();
+            var rol = await service.ObtenerPorIdAsync(id);
 
-            if (!await tokenValidator.ValidateAsync(token))
-                return Results.Unauthorized();
-
-            var rol =
-                await service.ObtenerPorIdAsync(id);
 
             if (rol == null)
             {
                 return Results.NotFound(new
                 {
+                    codigo = 404,
                     mensaje = "Rol no encontrado"
                 });
             }
 
-            var resultado =
-                await service.EliminarAsync(id);
+
+
+            var resultado = await service.EliminarAsync(id);
+
 
             if (!resultado.ok)
             {
                 return Results.BadRequest(new
                 {
+                    codigo = 400,
                     mensaje = resultado.error
                 });
             }
 
+
+
             await bitacoraClient.RegistrarAsync(
                 "Administrador del Sistema",
                 $"Eliminó el rol {rol.Nombre}",
-                token);
+                "");
+
+
 
             return Results.Ok(new
             {
-                mensaje = "Rol eliminado correctamente",
-                id = rol.Id,
-                nombre = rol.Nombre,
-                pantallas = rol.Pantallas
+                codigo = 200,
+                mensaje = "Rol eliminado correctamente"
             });
-        });
-    }
 
+        });
+
+    }
 }

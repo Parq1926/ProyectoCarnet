@@ -17,4 +17,6 @@ public interface IRolService
 
     Task<(bool ok, string error)> EliminarAsync(
         int id);
+
+    Task<int> ContarUsuariosAsync(int id); 
 }
