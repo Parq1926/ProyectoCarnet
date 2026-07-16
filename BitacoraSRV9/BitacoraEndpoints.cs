@@ -1,6 +1,6 @@
-﻿using BitacoraSRV9.Auth;
-using BitacoraSRV9.Entities;
+﻿using BitacoraSRV9.Entities;
 using BitacoraSRV9.Services;
+using BitacoraSRV9.Helpers;
 
 namespace BitacoraSRV9;
 
@@ -9,65 +9,112 @@ public static class BitacoraEndpoints
     public static void MapBitacoraEndpoints(
         this IEndpointRouteBuilder routes)
     {
+        // POST - Registrar en bitacora
         routes.MapPost("/bitacora",
         async (
-            HttpContext context,
             BitacoraRequest request,
             IBitacoraService service) =>
         {
-            var token = context.Request.Headers["Authorization"]
-                .ToString()
-                .Replace("Bearer ", "");
-
-            var tokenValidator =
-                context.RequestServices
-                .GetRequiredService<ITokenValidator>();
-
-            if (!await tokenValidator.ValidateAsync(token))
-                return Results.Unauthorized();
-
-            var resultado =
-                await service.RegistrarAsync(request);
-
-            if (!resultado.ok)
+            try
             {
-                return Results.BadRequest(new
+                var resultado =
+                    await service.RegistrarAsync(request);
+
+                if (!resultado.ok)
                 {
-                    mensaje = resultado.error,
+                    await service.RegistrarErrorAsync(
+                        request.Usuario,
+                        "Error al registrar en bitácora",
+                        BitacoraHelper.CrearJsonError(resultado.error)
+                    );
+
+                    return Results.BadRequest(new
+                    {
+                        mensaje = resultado.error,
+                        usuario = request.Usuario,
+                        accion = request.Accion
+                    });
+                }
+
+                return Results.Ok(new
+                {
+                    mensaje = "Movimiento registrado correctamente",
                     usuario = request.Usuario,
-                    accion = request.Accion
+                    accion = request.Accion,
+                    fecha = DateTime.Now
                 });
             }
-
-            return Results.Ok(new
+            catch (Exception ex)
             {
-                mensaje = "Movimiento registrado correctamente",
-                usuario = request.Usuario,
-                accion = request.Accion,
-                fecha = DateTime.Now
-            });
+                await service.RegistrarErrorAsync(
+                    "Sistema",
+                    ex,
+                    "POST /bitacora"
+                );
+
+                return Results.BadRequest(new
+                {
+                    mensaje = "Error al registrar en bitacora",
+                    error = ex.Message
+                });
+            }
         });
 
-        routes.MapGet("/bitacora",
+        // GET - Obtener bitácoras con filtros y paginación (NUEVO)
+        routes.MapGet("/bitacora/filtros",
         async (
-            HttpContext context,
+            [AsParameters] BitacoraFiltrosRequest filtros,
             IBitacoraService service) =>
         {
-            var token = context.Request.Headers["Authorization"]
-                .ToString()
-                .Replace("Bearer ", "");
+            try
+            {
+                var resultado =
+                    await service.ObtenerConFiltrosAsync(filtros);
 
-            var tokenValidator =
-                context.RequestServices
-                .GetRequiredService<ITokenValidator>();
+                return Results.Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                await service.RegistrarErrorAsync(
+                    "Sistema",
+                    ex,
+                    "GET /bitacora/filtros"
+                );
 
-            if (!await tokenValidator.ValidateAsync(token))
-                return Results.Unauthorized();
+                return Results.BadRequest(new
+                {
+                    mensaje = "Error al obtener bitacora con filtros",
+                    error = ex.Message
+                });
+            }
+        });
 
-            var lista =
-                await service.ObtenerTodosAsync();
+        // GET - Obtener todos (mantener para compatibilidad)
+        routes.MapGet("/bitacora",
+        async (
+            IBitacoraService service) =>
+        {
+            try
+            {
+                var lista =
+                    await service.ObtenerTodosAsync();
 
-            return Results.Ok(lista);
+                return Results.Ok(lista);
+            }
+            catch (Exception ex)
+            {
+                await service.RegistrarErrorAsync(
+                    "Sistema",
+                    ex,
+                    "GET /bitacora"
+                );
+
+                return Results.BadRequest(new
+                {
+                    mensaje = "Error al obtener bitacora",
+                    error = ex.Message
+                });
+            }
         });
     }
 }

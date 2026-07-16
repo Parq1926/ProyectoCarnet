@@ -71,11 +71,21 @@ public static class RolEndpoints
                 });
             }
 
+            var detalleJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Accion = "CREACION",
+                Rol = new
+                {
+                    Nombre = request.Nombre,
+                    Pantallas = request.Pantallas
+                }
+            });
+
 
             await bitacoraClient.RegistrarAsync(
                 "Administrador del Sistema",
                 $"Creó el rol {request.Nombre}",
-                "");
+                detalleJson);
 
 
 
@@ -102,6 +112,19 @@ public static class RolEndpoints
             IBitacoraClient bitacoraClient) =>
         {
 
+            var rolAnterior = await service.ObtenerPorIdAsync(id);
+
+
+            if (rolAnterior == null)
+            {
+                return Results.NotFound(new
+                {
+                    codigo = 404,
+                    mensaje = "Rol no encontrado"
+                });
+            }
+
+
             var resultado = await service.ActualizarAsync(id, request);
 
 
@@ -116,10 +139,24 @@ public static class RolEndpoints
 
 
 
+            var detalleJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Accion = "ACTUALIZACION",
+
+                Anterior = rolAnterior,
+
+                Nuevo = new
+                {
+                    Nombre = request.Nombre,
+                    Pantallas = request.Pantallas
+                }
+            });
+
+
             await bitacoraClient.RegistrarAsync(
                 "Administrador del Sistema",
                 $"Modificó el rol {request.Nombre}",
-                "");
+                detalleJson);
 
 
 
@@ -174,10 +211,17 @@ public static class RolEndpoints
 
 
 
+            var detalleJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Accion = "ELIMINACION",
+                Eliminado = rol
+            });
+
+
             await bitacoraClient.RegistrarAsync(
                 "Administrador del Sistema",
                 $"Eliminó el rol {rol.Nombre}",
-                "");
+                detalleJson);
 
 
 

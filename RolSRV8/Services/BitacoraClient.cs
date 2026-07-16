@@ -19,21 +19,18 @@ public class BitacoraClient : IBitacoraClient
     public async Task RegistrarAsync(
         string usuario,
         string accion,
-        string token)
+        string detalleJson)
     {
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue(
-                "Bearer",
-                token);
-
         var bitacoraUrl = _configuration["Services:Bitacora"];
 
         await _httpClient.PostAsJsonAsync(
             bitacoraUrl,
-                    new
+            new
             {
                 Usuario = usuario,
-                Accion = accion
+                Accion = accion,
+                DetalleJson = detalleJson,
+                EsError = false
             });
     }
 }
