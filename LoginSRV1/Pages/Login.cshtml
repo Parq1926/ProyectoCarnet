@@ -77,7 +77,11 @@
     </div>
 
     <script>
+<<<<<<< HEAD
             // Mostrar mensaje de redirección si existe
+=======
+            // ✅ Mostrar mensaje de redirección si existe
+>>>>>>> a7a79ac (Actualizacion del Login)
             document.addEventListener('DOMContentLoaded', function() {
                 const redirectMsg = localStorage.getItem('redirectMessage');
                 if (redirectMsg) {
@@ -87,12 +91,16 @@
                     localStorage.removeItem('redirectMessage');
                 }
 
+<<<<<<< HEAD
                 // Verificar si el token existe pero está expirado
                 const token = localStorage.getItem('accessToken');
                 if (token) {
                     // Si hay token, redirigir a Welcome (el layout lo maneja)
                     window.location.href = '/Welcome';
                 }
+=======
+                // ❌ ELIMINADO: Ya no redirige automáticamente a Welcome
+>>>>>>> a7a79ac (Actualizacion del Login)
             });
 
             document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -157,7 +165,11 @@
                         errorDiv.textContent = data.mensaje || 'Usuario bloqueado permanentemente. Contacte al administrador.';
                         errorDiv.style.display = 'block';
 
+<<<<<<< HEAD
                         //NO deshabilitar el formulario - permitir probar otro usuario
+=======
+                        // ❌ NO deshabilitar el formulario - permitir probar otro usuario
+>>>>>>> a7a79ac (Actualizacion del Login)
                         // Solo mostrar el mensaje de bloqueo
 
                     } else {

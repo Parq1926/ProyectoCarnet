@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 ﻿// Endpoints/LoginEndpoints.cs
 using LoginSRV1.Data;
+=======
+﻿using LoginSRV1.Data;
+>>>>>>> a7a79ac (Actualizacion del Login)
 using LoginSRV1.DTOs;
 using LoginSRV1.Entities;
 using LoginSRV1.Services;
@@ -23,6 +27,7 @@ namespace LoginSRV1.Endpoints
             // Login
             group.MapPost("/login", async (
                 [FromBody] LoginDto login,
+<<<<<<< HEAD
                 [FromServices] ApplicationDbContext db,
                 [FromServices] ITokenService tokenService) =>
             {
@@ -171,6 +176,123 @@ namespace LoginSRV1.Endpoints
                 [FromBody] RefreshTokenRequestDto request,
                 [FromServices] ApplicationDbContext db,
                 [FromServices] ITokenService tokenService) =>
+=======
+                [FromServices] IUsuarioApiClient usuarioApiClient,
+                [FromServices] ApplicationDbContext db,
+                [FromServices] ITokenService tokenService) =>
+            {
+                try
+                {
+                    // Validar datos
+                    if (login == null || string.IsNullOrWhiteSpace(login.Usuario) ||
+                        string.IsNullOrWhiteSpace(login.Contrasena) || string.IsNullOrWhiteSpace(login.Tipo))
+                    {
+                        return Results.BadRequest(new { codigo = 400, mensaje = "Usuario, contraseña y tipo son requeridos" });
+                    }
+
+                    // Consultar usuario en UsuariosSRV4
+                    var credencialesResponse = await usuarioApiClient.ValidarCredencialesAsync(
+                        login.Usuario,
+                        login.Contrasena,
+                        login.Tipo
+                    );
+
+                    if (credencialesResponse == null)
+                    {
+                        return Results.Json(new
+                        {
+                            codigo = 401,
+                            mensaje = "Usuario y/o contraseña incorrectos"
+                        }, statusCode: 401);
+                    }
+
+                    if (credencialesResponse.Bloqueado)
+                    {
+                        return Results.Json(new
+                        {
+                            codigo = 403,
+                            mensaje = "Usuario bloqueado permanentemente. Contacte al administrador."
+                        }, statusCode: 403);
+                    }
+
+                    if (!credencialesResponse.Activo)
+                    {
+                        return Results.Json(new
+                        {
+                            codigo = 403,
+                            mensaje = "Usuario inactivo. Contacte al administrador."
+                        }, statusCode: 403);
+                    }
+
+                    // ✅ Convertir ValidarCredencialesResponse a UsuarioDto
+                    var user = new UsuarioDto
+                    {
+                        Id = credencialesResponse.Id,
+                        Email = credencialesResponse.Email,
+                        NombreCompleto = credencialesResponse.NombreCompleto,
+                        TipoUsuario = credencialesResponse.TipoUsuario,
+                        Activo = credencialesResponse.Activo,
+                        Bloqueado = credencialesResponse.Bloqueado
+                    };
+
+                    // Obtener parámetros de expiración
+                    var jwtExpParam = await db.Parametros
+                        .FirstOrDefaultAsync(p => p.Id == "JWT_EXP_MIN");
+                    var jwtExpMin = jwtExpParam != null && int.TryParse(jwtExpParam.Valor, out int jwt) ? jwt : 5;
+
+                    var refreshExpParam = await db.Parametros
+                        .FirstOrDefaultAsync(p => p.Id == "REFRESH_EXP_DAYS");
+                    var refreshExpDays = refreshExpParam != null && int.TryParse(refreshExpParam.Valor, out int refresh) ? refresh : 7;
+
+                    // ✅ Generar tokens usando UsuarioDto
+                    var accessToken = tokenService.GenerateJwtToken(user);
+                    var refreshToken = tokenService.GenerateRefreshToken();
+
+                    // Guardar refresh token en SESION
+                    var session = new Sesion
+                    {
+                        UsuarioId = user.Id,
+                        RefreshToken = refreshToken,
+                        FechaExpiracion = DateTime.Now.AddDays(refreshExpDays),
+                        Activo = true,
+                        FechaCreacion = DateTime.Now
+                    };
+
+                    db.Sesiones.Add(session);
+                    await db.SaveChangesAsync();
+
+                    // ✅ Usar LoginResponseDto
+                    return Results.Ok(new LoginResponseDto
+                    {
+                        Codigo = 200,
+                        Mensaje = "Login exitoso",
+                        ExpiresIn = DateTime.Now.AddMinutes(jwtExpMin),
+                        AccessToken = accessToken,
+                        RefreshToken = refreshToken,
+                        UsuarioId = user.Id,
+                        Institutions = new[] { "CUC" }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Error en login: {ex.Message}");
+                    Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                    return Results.Json(new
+                    {
+                        codigo = 500,
+                        mensaje = $"Error interno: {ex.Message}"
+                    }, statusCode: 500);
+                }
+            })
+            .WithName("Login");
+
+            // Refresh Token
+            group.MapPost("/refresh", async (
+                [FromBody] RefreshTokenRequestDto request,
+                [FromServices] ApplicationDbContext db,
+                [FromServices] ITokenService tokenService,
+                [FromServices] IUsuarioApiClient usuarioApiClient) =>
+>>>>>>> a7a79ac (Actualizacion del Login)
             {
                 if (string.IsNullOrWhiteSpace(request.RefreshToken))
                 {
@@ -178,7 +300,10 @@ namespace LoginSRV1.Endpoints
                 }
 
                 var session = await db.Sesiones
+<<<<<<< HEAD
                     .Include(s => s.Usuario)
+=======
+>>>>>>> a7a79ac (Actualizacion del Login)
                     .FirstOrDefaultAsync(s => s.RefreshToken == request.RefreshToken && s.Activo);
 
                 if (session == null || session.FechaExpiracion < DateTime.Now)
@@ -186,12 +311,30 @@ namespace LoginSRV1.Endpoints
                     return Results.Json(new { codigo = 401, mensaje = "No autorizado" }, statusCode: 401);
                 }
 
+<<<<<<< HEAD
                 var newAccessToken = tokenService.GenerateJwtToken(session.Usuario!);
                 var newRefreshToken = tokenService.GenerateRefreshToken();
 
                 session.Activo = false;
                 db.Sesiones.Update(session);
 
+=======
+                // Obtener usuario desde UsuariosSRV4 (devuelve UsuarioDto)
+                var user = await usuarioApiClient.GetUsuarioByIdAsync(session.UsuarioId);
+                if (user == null)
+                {
+                    return Results.Json(new { codigo = 401, mensaje = "Usuario no encontrado" }, statusCode: 401);
+                }
+
+                var newAccessToken = tokenService.GenerateJwtToken(user);
+                var newRefreshToken = tokenService.GenerateRefreshToken();
+
+                // Invalidar refresh token anterior
+                session.Activo = false;
+                db.Sesiones.Update(session);
+
+                // Guardar nuevo refresh token
+>>>>>>> a7a79ac (Actualizacion del Login)
                 var newSession = new Sesion
                 {
                     UsuarioId = session.UsuarioId,
@@ -215,6 +358,7 @@ namespace LoginSRV1.Endpoints
             })
             .WithName("RefreshToken");
 
+<<<<<<< HEAD
             // Validate
 
             group.MapGet("/validate", async (
@@ -226,6 +370,13 @@ namespace LoginSRV1.Endpoints
                 Console.WriteLine(authorization);
 
 
+=======
+            // Validate Token
+            group.MapGet("/validate", async (
+                [FromHeader(Name = "Authorization")] string authorization,
+                [FromServices] IConfiguration config) =>
+            {
+>>>>>>> a7a79ac (Actualizacion del Login)
                 string? token = null;
                 if (!string.IsNullOrWhiteSpace(authorization) && authorization.StartsWith("Bearer "))
                 {
@@ -270,8 +421,14 @@ namespace LoginSRV1.Endpoints
                         Valido = false
                     }, statusCode: 401);
                 }
+<<<<<<< HEAD
                 catch
                 {
+=======
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Error validando token: {ex.Message}");
+>>>>>>> a7a79ac (Actualizacion del Login)
                     return Results.Json(new TokenValidationDto
                     {
                         Codigo = 401,
@@ -281,7 +438,10 @@ namespace LoginSRV1.Endpoints
                 }
             })
             .WithName("ValidateToken");
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7a79ac (Actualizacion del Login)
         }
     }
 }

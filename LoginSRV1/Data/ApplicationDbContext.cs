@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 ﻿// Data/ApplicationDbContext.cs
 using LoginSRV1.Entities;
+=======
+﻿using LoginSRV1.Entities;
+>>>>>>> a7a79ac (Actualizacion del Login)
 using Microsoft.EntityFrameworkCore;
 
 namespace LoginSRV1.Data
@@ -8,7 +12,10 @@ namespace LoginSRV1.Data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
+<<<<<<< HEAD
         public DbSet<Usuario> Usuarios { get; set; }
+=======
+>>>>>>> a7a79ac (Actualizacion del Login)
         public DbSet<Sesion> Sesiones { get; set; }
         public DbSet<Parametro> Parametros { get; set; }
 
@@ -16,6 +23,7 @@ namespace LoginSRV1.Data
         {
             base.OnModelCreating(modelBuilder);
 
+<<<<<<< HEAD
             modelBuilder.Entity<Usuario>().ToTable("USUARIO", "PameRojas");
             modelBuilder.Entity<Sesion>().ToTable("SESION", "PameRojas");
             modelBuilder.Entity<Parametro>().ToTable("PARAMETRO", "PameRojas");
@@ -40,6 +48,11 @@ namespace LoginSRV1.Data
                 entity.Property(e => e.FechaCreacion).HasColumnName("FECHA_CREACION");
             });
 
+=======
+            modelBuilder.Entity<Sesion>().ToTable("SESION", "PameRojas");
+            modelBuilder.Entity<Parametro>().ToTable("PARAMETRO", "PameRojas");
+
+>>>>>>> a7a79ac (Actualizacion del Login)
             modelBuilder.Entity<Sesion>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -49,10 +62,13 @@ namespace LoginSRV1.Data
                 entity.Property(e => e.FechaExpiracion).HasColumnName("FECHA_EXPIRACION");
                 entity.Property(e => e.Activo).HasColumnName("ACTIVO");
                 entity.Property(e => e.FechaCreacion).HasColumnName("FECHA_CREACION");
+<<<<<<< HEAD
 
                 entity.HasOne(e => e.Usuario)
                       .WithMany(u => u.Sesiones)
                       .HasForeignKey(e => e.UsuarioId);
+=======
+>>>>>>> a7a79ac (Actualizacion del Login)
             });
 
             modelBuilder.Entity<Parametro>(entity =>

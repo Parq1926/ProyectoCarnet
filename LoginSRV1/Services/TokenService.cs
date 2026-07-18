@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 ﻿// Services/TokenService.cs
 using LoginSRV1.Entities;
+=======
+﻿using LoginSRV1.DTOs;
+>>>>>>> a7a79ac (Actualizacion del Login)
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -8,6 +12,15 @@ using System.Text;
 
 namespace LoginSRV1.Services
 {
+<<<<<<< HEAD
+=======
+    public interface ITokenService
+    {
+        string GenerateJwtToken(UsuarioDto user);
+        string GenerateRefreshToken();
+    }
+
+>>>>>>> a7a79ac (Actualizacion del Login)
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _configuration;
@@ -17,6 +30,7 @@ namespace LoginSRV1.Services
             _configuration = configuration;
         }
 
+<<<<<<< HEAD
         public string GenerateJwtToken(Usuario user)
         {
             var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"] ?? "MiClavePredeterminada1234567890!!");
@@ -30,12 +44,22 @@ namespace LoginSRV1.Services
                 _ => "Usuario"
             };
 
+=======
+        public string GenerateJwtToken(UsuarioDto user)
+        {
+            var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"] ?? "MiClavePredeterminada1234567890!!");
+
+>>>>>>> a7a79ac (Actualizacion del Login)
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.NombreCompleto),
                 new Claim(ClaimTypes.Email, user.Email),
+<<<<<<< HEAD
                 new Claim(ClaimTypes.Role, roleName)
+=======
+                new Claim(ClaimTypes.Role, user.TipoUsuario)
+>>>>>>> a7a79ac (Actualizacion del Login)
             };
 
             var token = new JwtSecurityToken(

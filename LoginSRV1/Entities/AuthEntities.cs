@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿// Entities/AuthEntities.cs
 using System.Text.Json.Serialization;
 
@@ -20,6 +21,10 @@ namespace LoginSRV1.Entities
         public ICollection<Sesion>? Sesiones { get; set; }
     }
 
+=======
+﻿namespace LoginSRV1.Entities
+{
+>>>>>>> a7a79ac (Actualizacion del Login)
     public class Sesion
     {
         public int Id { get; set; }
@@ -28,9 +33,12 @@ namespace LoginSRV1.Entities
         public DateTime FechaExpiracion { get; set; }
         public bool Activo { get; set; } = true;
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
+<<<<<<< HEAD
 
         [JsonIgnore]
         public Usuario? Usuario { get; set; }
+=======
+>>>>>>> a7a79ac (Actualizacion del Login)
     }
 
     public class Parametro

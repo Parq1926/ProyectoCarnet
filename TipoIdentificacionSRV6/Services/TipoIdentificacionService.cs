@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+<<<<<<< HEAD
 using SRV6_TipoIdentificacion.Data;
 using SRV6_TipoIdentificacion.DTOs;
 using SRV6_TipoIdentificacion.Entities;
@@ -95,5 +96,106 @@ public class TipoIdentificacionService : ITipoIdentificacionService
     public async Task<bool> ValidarExistenciaAsync(string nombre)
     {
         return await _db.TiposIdentificacion.AnyAsync(t => t.Nombre == nombre);
+=======
+using TipoIdentificacionSRV6.Data;
+using TipoIdentificacionSRV6.DTOs;
+using TipoIdentificacionSRV6.Entities;
+
+namespace TipoIdentificacionSRV6.Services
+{
+    public class TipoIdentificacionService : ITipoIdentificacionService
+    {
+        private readonly ApplicationDbContext _db;
+
+        public TipoIdentificacionService(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+
+        public async Task<IEnumerable<TipoIdentificacionDto>> GetAllAsync()
+        {
+            return await _db.TiposIdentificacion
+                .OrderBy(t => t.Nombre)
+                .Select(t => new TipoIdentificacionDto
+                {
+                    Id = t.Id,
+                    Nombre = t.Nombre
+                })
+                .ToListAsync();
+        }
+
+        public async Task<TipoIdentificacionDto?> GetByIdAsync(int id)
+        {
+            var entity = await _db.TiposIdentificacion
+                .FirstOrDefaultAsync(t => t.Id == id);  // ✅ CORREGIDO: t.Id == id
+
+            if (entity == null) return null;
+
+            return new TipoIdentificacionDto
+            {
+                Id = entity.Id,
+                Nombre = entity.Nombre
+                // ❌ ELIMINADO: Activo, FechaCreacion
+            };
+        }
+
+        public async Task<int> CreateAsync(TipoIdentificacionCreateDto dto)
+        {
+            var entity = new TipoIdentificacion
+            {
+                Nombre = dto.Nombre.Trim()
+                // ❌ ELIMINADO: Activo, FechaCreacion
+            };
+
+            _db.TiposIdentificacion.Add(entity);
+            await _db.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public async Task<int> UpdateAsync(TipoIdentificacionUpdateDto dto)
+        {
+            var entity = await _db.TiposIdentificacion
+                .FirstOrDefaultAsync(t => t.Id == dto.Id);  // ✅ CORREGIDO
+
+            if (entity == null) return 0;
+
+            entity.Nombre = dto.Nombre.Trim();
+            // ❌ ELIMINADO: FechaModificacion
+
+            await _db.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public async Task<int> DeleteAsync(int id)
+        {
+            var entity = await _db.TiposIdentificacion
+                .FirstOrDefaultAsync(t => t.Id == id);  // ✅ CORREGIDO
+
+            if (entity == null) return 0;
+
+            _db.TiposIdentificacion.Remove(entity);  // ✅ ELIMINACIÓN FÍSICA
+            await _db.SaveChangesAsync();
+            return id;
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _db.TiposIdentificacion
+                .AnyAsync(t => t.Id == id);  // ✅ CORREGIDO
+        }
+
+        public async Task<bool> ExistsByNameAsync(string nombre, int? excludeId = null)
+        {
+            var query = _db.TiposIdentificacion
+                .Where(t => t.Nombre == nombre.Trim());  // ✅ CORREGIDO
+
+            if (excludeId.HasValue)
+            {
+                query = query.Where(t => t.Id != excludeId.Value);
+            }
+
+            return await query.AnyAsync();
+        }
+>>>>>>> a7a79ac (Actualizacion del Login)
     }
 }

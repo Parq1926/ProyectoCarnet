@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+<<<<<<< HEAD
 using SRV5_TipoUsuario.Data;
 using SRV5_TipoUsuario.DTOs;
 using SRV5_TipoUsuario.Entities;
@@ -95,5 +96,103 @@ public class TipoUsuarioService : ITipoUsuarioService
     public async Task<bool> ValidarExistenciaAsync(string nombre)
     {
         return await _db.TiposUsuario.AnyAsync(t => t.Nombre == nombre);
+=======
+using TiposUsuarioSRV5.Data;
+using TiposUsuarioSRV5.DTOs;
+using TiposUsuarioSRV5.Entities;
+
+namespace TiposUsuarioSRV5.Services
+{
+    public class TipoUsuarioService : ITipoUsuarioService
+    {
+        private readonly ApplicationDbContext _db;
+
+        public TipoUsuarioService(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+
+        public async Task<IEnumerable<TipoUsuarioDto>> GetAllAsync()
+        {
+            return await _db.TiposUsuario
+                .OrderBy(t => t.Nombre)
+                .Select(t => new TipoUsuarioDto
+                {
+                    Id = t.Id,
+                    Nombre = t.Nombre
+                })
+                .ToListAsync();
+        }
+
+        public async Task<TipoUsuarioDto?> GetByIdAsync(int id)
+        {
+            var entity = await _db.TiposUsuario
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (entity == null) return null;
+
+            return new TipoUsuarioDto
+            {
+                Id = entity.Id,
+                Nombre = entity.Nombre
+            };
+        }
+
+        public async Task<int> CreateAsync(TipoUsuarioCreateDto dto)
+        {
+            var entity = new TipoUsuario
+            {
+                Nombre = dto.Nombre.Trim()
+            };
+
+            _db.TiposUsuario.Add(entity);
+            await _db.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public async Task<int> UpdateAsync(TipoUsuarioUpdateDto dto)
+        {
+            var entity = await _db.TiposUsuario
+                .FirstOrDefaultAsync(t => t.Id == dto.Id);
+
+            if (entity == null) return 0;
+
+            entity.Nombre = dto.Nombre.Trim();
+
+            await _db.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public async Task<int> DeleteAsync(int id)
+        {
+            var entity = await _db.TiposUsuario
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (entity == null) return 0;
+
+            _db.TiposUsuario.Remove(entity);
+            await _db.SaveChangesAsync();
+            return id;
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _db.TiposUsuario
+                .AnyAsync(t => t.Id == id);
+        }
+
+        public async Task<bool> ExistsByNameAsync(string nombre, int? excludeId = null)
+        {
+            var query = _db.TiposUsuario
+                .Where(t => t.Nombre == nombre.Trim());
+
+            if (excludeId.HasValue)
+            {
+                query = query.Where(t => t.Id != excludeId.Value);
+            }
+
+            return await query.AnyAsync();
+        }
+>>>>>>> a7a79ac (Actualizacion del Login)
     }
 }

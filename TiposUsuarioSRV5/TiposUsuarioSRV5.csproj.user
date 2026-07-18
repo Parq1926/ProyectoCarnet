@@ -3,5 +3,10 @@
   <PropertyGroup>
     <ActiveDebugProfile>https</ActiveDebugProfile>
     <NameOfLastUsedPublishProfile>C:\Users\Usuario\Desktop\CarnetDigital\ProyectoCarnet-main\TiposUsuarioSRV5\Properties\PublishProfiles\FolderProfile.pubxml</NameOfLastUsedPublishProfile>
+<<<<<<< HEAD
+=======
+    <RazorPage_SelectedScaffolderID>RazorPageScaffolder</RazorPage_SelectedScaffolderID>
+    <RazorPage_SelectedScaffolderCategoryPath>root/Common/RazorPage</RazorPage_SelectedScaffolderCategoryPath>
+>>>>>>> a7a79ac (Actualizacion del Login)
   </PropertyGroup>
 </Project>

@@ -1,0 +1,541 @@
+﻿@page
+@model TipoIdentificacionSRV6.Pages.TiposIdentificacion.IndexModel
+@{
+    ViewData["Title"] = "Administracion de Tipos de Identificacion";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/sitetipoidentificacion.css" />
+
+<div class="page-header">
+    <h2><i class="fas fa-id-card"></i> Lista de Tipos de Identificacion</h2>
+    <div>
+        <button class="btn btn-primary" onclick="abrirModalCrear()">
+            <i class="fas fa-plus"></i> Nuevo Tipo
+        </button>
+        <button class="btn btn-info" onclick="abrirModalBuscar()">
+            <i class="fas fa-search"></i> Buscar por ID
+        </button>
+    </div>
+</div>
+
+<div id="alertas"></div>
+
+<div id="loading" class="loading" style="display:none;">
+    <div class="spinner-border"></div>
+    <p class="mt-2">Cargando tipos de identificacion...</p>
+</div>
+
+<div id="listaTiposIdentificacion" class="tipoidentificacion-grid"></div>
+
+<!-- ======================================== -->
+<!-- MODAL BUSCAR POR ID -->
+<!-- ======================================== -->
+<div class="modal" id="modalBuscar">
+    <div class="modal-dialog" style="max-width:500px;">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#17a2b8;">
+                <h5 class="modal-title">Buscar Tipo de Identificacion por ID</h5>
+                <button class="btn-close" onclick="cerrarModalBuscar()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Ingrese el ID del tipo de identificacion</label>
+                    <input id="buscarId" type="number" class="form-control" placeholder="Ej: 1, 2, 3..." min="1">
+                </div>
+                <div id="buscarResultado" style="margin-top:15px; display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalBuscar()">Cancelar</button>
+                <button class="btn btn-info" onclick="buscarTipoIdentificacionPorId()">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================== -->
+<!-- MODAL CREAR / EDITAR -->
+<!-- ======================================== -->
+<div class="modal" id="modalFormulario">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModal">Nuevo Tipo de Identificacion</h5>
+                <button class="btn-close" onclick="cerrarModalFormulario()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="idTipoIdentificacion" value="0">
+
+                <div class="form-group">
+                    <label>Nombre *</label>
+                    <input id="nombre" class="form-control" placeholder="Nombre del tipo de identificacion">
+                    <div class="invalid-feedback" id="errNombre"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalFormulario()">Cancelar</button>
+                <button class="btn btn-success" onclick="guardarTipoIdentificacion()">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================== -->
+<!-- MODAL ELIMINAR -->
+<!-- ======================================== -->
+<div class="modal" id="modalEliminar">
+    <div class="modal-dialog" style="max-width:500px;">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#dc3545;">
+                <h5 class="modal-title">Confirmar Eliminacion</h5>
+                <button class="btn-close" onclick="cerrarModalEliminar()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Esta seguro de eliminar el tipo de identificacion <strong id="nombreEliminar"></strong>?</p>
+                <p style="color: #6c757d; font-size: 14px;">Esta accion no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalEliminar()">Cancelar</button>
+                <button class="btn btn-danger" onclick="eliminarTipoIdentificacion()">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = window.location.origin + '/api/TipoIdentificacion';
+    let idEliminar = 0;
+
+    // ========================================
+    // TOKEN - RECIBIR DE LA URL O LOCALSTORAGE
+    // ========================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Intentar obtener token de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let tokenFromUrl = urlParams.get('token');
+
+        // 2. Si hay token en la URL, guardarlo en localStorage
+        if (tokenFromUrl) {
+            localStorage.setItem('accessToken', tokenFromUrl);
+            // Limpiar la URL para no mostrar el token
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+            console.log('✅ Token recibido desde la URL');
+        }
+
+        // 3. Verificar si hay token en localStorage
+        const storedToken = localStorage.getItem('accessToken');
+        if (!storedToken) {
+            console.log('❌ No hay token, redirigiendo a Login');
+            mostrarAlerta('No hay sesión activa. Redirigiendo...', 'warning');
+            setTimeout(function() {
+                window.location.href = 'https://localhost:7019/Login';
+            }, 2000);
+            return;
+        }
+
+        console.log('✅ Token encontrado en localStorage');
+
+        // 4. Verificar que el token no esté expirado
+        try {
+            const payload = JSON.parse(atob(storedToken.split('.')[1]));
+            const exp = payload.exp * 1000;
+            if (Date.now() >= exp) {
+                console.log('❌ Token expirado');
+                localStorage.removeItem('accessToken');
+                mostrarAlerta('Sesión expirada. Redirigiendo...', 'warning');
+                setTimeout(function() {
+                    window.location.href = 'https://localhost:7019/Login';
+                }, 2000);
+                return;
+            }
+        } catch (e) {
+            console.log('❌ Token inválido');
+            localStorage.removeItem('accessToken');
+            window.location.href = 'https://localhost:7019/Login';
+            return;
+        }
+
+        // 5. Cargar los datos
+        cargarTiposIdentificacion();
+    });
+
+    // ========================================
+    // FUNCIONES PARA OBTENER TOKEN
+    // ========================================
+
+    function getToken() {
+        return localStorage.getItem('accessToken');
+    }
+
+    function getHeaders() {
+        const token = getToken();
+        if (!token) {
+            mostrarAlerta('No hay sesión activa. Redirigiendo...', 'warning');
+            setTimeout(function() {
+                window.location.href = 'https://localhost:7019/Login';
+            }, 1500);
+            return null;
+        }
+        return {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        };
+    }
+
+    // ========================================
+    // FUNCIONES DE MODALES
+    // ========================================
+
+    function abrirModalCrear() {
+        document.getElementById('tituloModal').textContent = 'Nuevo Tipo de Identificacion';
+        document.getElementById('idTipoIdentificacion').value = '0';
+        document.getElementById('nombre').value = '';
+        limpiarErrores();
+        document.getElementById('modalFormulario').style.display = 'flex';
+    }
+
+    function cerrarModalFormulario() {
+        document.getElementById('modalFormulario').style.display = 'none';
+        limpiarErrores();
+    }
+
+    function abrirModalBuscar() {
+        document.getElementById('buscarId').value = '';
+        document.getElementById('buscarResultado').style.display = 'none';
+        document.getElementById('buscarResultado').innerHTML = '';
+        document.getElementById('modalBuscar').style.display = 'flex';
+    }
+
+    function cerrarModalBuscar() {
+        document.getElementById('modalBuscar').style.display = 'none';
+    }
+
+    function abrirModalEliminar(id, nombre) {
+        idEliminar = id;
+        document.getElementById('nombreEliminar').textContent = nombre;
+        document.getElementById('modalEliminar').style.display = 'flex';
+    }
+
+    function cerrarModalEliminar() {
+        document.getElementById('modalEliminar').style.display = 'none';
+    }
+
+    // ========================================
+    // ALERTAS Y LOADING
+    // ========================================
+
+    function mostrarAlerta(mensaje, tipo) {
+        const div = document.getElementById('alertas');
+        div.innerHTML = `
+            <div class="alert alert-${tipo} alert-dismissible">
+                ${mensaje}
+                <button onclick="this.parentElement.remove()" style="float:right; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+            </div>
+        `;
+        setTimeout(() => { div.innerHTML = ''; }, 4000);
+    }
+
+    function mostrarLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+    }
+
+    // ========================================
+    // BUSCAR POR ID
+    // ========================================
+
+    async function buscarTipoIdentificacionPorId() {
+        const id = document.getElementById('buscarId').value.trim();
+
+        if (!id || parseInt(id) <= 0) {
+            mostrarAlerta('Ingrese un ID valido mayor a 0', 'warning');
+            return;
+        }
+
+        const resultadoDiv = document.getElementById('buscarResultado');
+        resultadoDiv.style.display = 'block';
+        resultadoDiv.innerHTML = '<div class="loading"><div class="spinner-border"></div><p>Buscando...</p></div>';
+
+        try {
+            const headers = getHeaders();
+            if (!headers) {
+                resultadoDiv.innerHTML = `<div class="alert alert-danger">No hay sesion activa</div>`;
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/${id}`, { headers });
+
+            if (response.status === 401) {
+                window.location.href = 'https://localhost:7019/Login';
+                return;
+            }
+
+            if (response.status === 404) {
+                resultadoDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No se encontro ningun tipo de identificacion con ID ${id}
+                    </div>
+                `;
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Error al buscar');
+            }
+
+            const data = await response.json();
+
+            resultadoDiv.innerHTML = `
+                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #dee2e6;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:14px;">
+                        <div><strong>ID:</strong> ${data.id}</div>
+                        <div><strong>Nombre:</strong> ${data.nombre}</div>
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:8px;">
+                        <button class="btn btn-warning btn-sm" onclick="editarTipoIdentificacion(${data.id})">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="abrirModalEliminar(${data.id}, '${data.nombre}')">Eliminar</button>
+                        <button class="btn btn-secondary btn-sm" onclick="cerrarModalBuscar()">Cerrar</button>
+                    </div>
+                </div>
+            `;
+
+        } catch (error) {
+            resultadoDiv.innerHTML = `
+                <div class="alert alert-danger">Error al buscar: ${error.message}</div>
+            `;
+        }
+    }
+
+    // ========================================
+    // VALIDACIONES
+    // ========================================
+
+    function limpiarErrores() {
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+    }
+
+    function mostrarError(campo, mensaje) {
+        const el = document.getElementById(campo);
+        const err = document.getElementById('err' + campo.charAt(0).toUpperCase() + campo.slice(1));
+        el.classList.add('is-invalid');
+        err.textContent = mensaje;
+    }
+
+    function validarFormulario() {
+        let valido = true;
+        limpiarErrores();
+
+        const nombre = document.getElementById('nombre').value.trim();
+
+        if (!nombre) {
+            mostrarError('nombre', 'El nombre es requerido');
+            valido = false;
+        } else if (nombre.length < 3 || nombre.length > 50) {
+            mostrarError('nombre', 'El nombre debe tener entre 3 y 50 caracteres');
+            valido = false;
+        }
+
+        return valido;
+    }
+
+    function obtenerDatosFormulario() {
+        const data = {
+            nombre: document.getElementById('nombre').value.trim()
+        };
+
+        const id = document.getElementById('idTipoIdentificacion').value;
+        if (id !== '0') {
+            data.id = parseInt(id);
+        }
+
+        return data;
+    }
+
+    // ========================================
+    // CRUD - LISTAR TODOS
+    // ========================================
+
+    async function cargarTiposIdentificacion() {
+        const container = document.getElementById('listaTiposIdentificacion');
+        mostrarLoading(true);
+
+        try {
+            const headers = getHeaders();
+            if (!headers) {
+                mostrarLoading(false);
+                return;
+            }
+
+            const response = await fetch(API_URL, { headers });
+
+            if (response.status === 401) {
+                window.location.href = 'https://localhost:7019/Login';
+                return;
+            }
+
+            if (!response.ok) throw new Error('Error al cargar');
+            const tipos = await response.json();
+
+            if (!tipos || tipos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-id-card fa-4x"></i>
+                        <p>No hay tipos de identificacion registrados</p>
+                        <button class="btn btn-primary" onclick="abrirModalCrear()">
+                            <i class="fas fa-plus"></i> Crear primer tipo
+                        </button>
+                    </div>
+                `;
+                mostrarLoading(false);
+                return;
+            }
+
+            let html = '';
+            tipos.forEach(function(t) {
+                html += `
+                    <div class="tipoidentificacion-card">
+                        <div class="tipoidentificacion-card-header">
+                            <h3>${t.nombre}</h3>
+                            <span class="badge-success">Activo</span>
+                        </div>
+                        <div class="tipoidentificacion-card-body">
+                            <div class="info-row">
+                                <span class="label"><i class="fas fa-id-badge"></i> ID:</span>
+                                <span class="value">${t.id}</span>
+                            </div>
+                        </div>
+                        <div class="tipoidentificacion-card-footer">
+                            <button class="btn-sm btn-info" onclick="editarTipoIdentificacion(${t.id})">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="btn-sm btn-danger" onclick="abrirModalEliminar(${t.id}, '${t.nombre}')">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        } catch (error) {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Error al cargar tipos de identificacion
+                </div>
+            `;
+        }
+
+        mostrarLoading(false);
+    }
+
+    // ========================================
+    // CRUD - CREAR / EDITAR
+    // ========================================
+
+    async function guardarTipoIdentificacion() {
+        if (!validarFormulario()) return;
+
+        const headers = getHeaders();
+        if (!headers) return;
+
+        const id = document.getElementById('idTipoIdentificacion').value;
+        const data = obtenerDatosFormulario();
+        const isEdit = id !== '0';
+        const url = isEdit ? `${API_URL}/${id}` : API_URL;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: headers,
+                body: JSON.stringify(data)
+            });
+
+            if (response.status === 401) {
+                window.location.href = 'https://localhost:7019/Login';
+                return;
+            }
+
+            if (response.ok) {
+                mostrarAlerta(isEdit ? 'Tipo de identificacion actualizado' : 'Tipo de identificacion creado', 'success');
+                cerrarModalFormulario();
+                cargarTiposIdentificacion();
+                cerrarModalBuscar();
+            } else {
+                const error = await response.json();
+                mostrarAlerta(error.error || 'Error al guardar', 'danger');
+            }
+        } catch (error) {
+            mostrarAlerta('Error de conexion: ' + error.message, 'danger');
+        }
+    }
+
+    // ========================================
+    // CRUD - EDITAR (OBTENER POR ID + LLENAR MODAL)
+    // ========================================
+
+    async function editarTipoIdentificacion(id) {
+        try {
+            const headers = getHeaders();
+            if (!headers) return;
+
+            const response = await fetch(`${API_URL}/${id}`, { headers });
+
+            if (response.status === 401) {
+                window.location.href = 'https://localhost:7019/Login';
+                return;
+            }
+
+            if (!response.ok) throw new Error('Error al obtener datos');
+            const data = await response.json();
+
+            document.getElementById('tituloModal').textContent = 'Editar Tipo de Identificacion';
+            document.getElementById('idTipoIdentificacion').value = data.id;
+            document.getElementById('nombre').value = data.nombre;
+            limpiarErrores();
+            document.getElementById('modalFormulario').style.display = 'flex';
+        } catch (error) {
+            mostrarAlerta('Error al cargar datos: ' + error.message, 'danger');
+        }
+    }
+
+    // ========================================
+    // CRUD - ELIMINAR
+    // ========================================
+
+    async function eliminarTipoIdentificacion() {
+        const headers = getHeaders();
+        if (!headers) return;
+
+        try {
+            const response = await fetch(`${API_URL}/${idEliminar}`, {
+                method: 'DELETE',
+                headers: headers
+            });
+
+            if (response.status === 401) {
+                window.location.href = 'https://localhost:7019/Login';
+                return;
+            }
+
+            if (response.ok) {
+                cerrarModalEliminar();
+                mostrarAlerta('Tipo de identificacion eliminado', 'success');
+                cargarTiposIdentificacion();
+                cerrarModalBuscar();
+            } else {
+                const error = await response.json();
+                mostrarAlerta(error.error || 'Error al eliminar', 'danger');
+            }
+        } catch (error) {
+            mostrarAlerta('Error de conexion: ' + error.message, 'danger');
+        }
+    }
+</script>

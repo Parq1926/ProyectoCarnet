@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 ﻿// Services/IAuthService.cs
 using LoginSRV1.DTOs;
+=======
+﻿using LoginSRV1.DTOs;
+>>>>>>> a7a79ac (Actualizacion del Login)
 
 namespace LoginSRV1.Services
 {

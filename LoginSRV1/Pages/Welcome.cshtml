@@ -48,6 +48,7 @@
         </div>
 
         <div class="welcome-actions">
+<<<<<<< HEAD
             <a href="#" class="btn-primary">
                 <i class="fas fa-id-card"></i>
                 Ver mi Carnet
@@ -55,13 +56,30 @@
             <a href="#" class="btn-secondary">
                 <i class="fas fa-qrcode"></i>
                 Generar QR
+=======
+            <a href="#" onclick="abrirUsuarios(); return false;" class="btn-primary">
+                <i class="fas fa-users"></i>
+                Usuarios
+            </a>
+            <a href="#" onclick="abrirTiposUsuario(); return false;" class="btn-secondary">
+                <i class="fas fa-user-tag"></i>
+                Tipos de Usuario
+            </a>
+            <a href="#" onclick="abrirTiposIdentificacion(); return false;" class="btn-secondary">
+                <i class="fas fa-id-card"></i>
+                Tipos de Identificación
+>>>>>>> a7a79ac (Actualizacion del Login)
             </a>
         </div>
     </div>
 </div>
 
 <script>
+<<<<<<< HEAD
     // Mostrar datos del usuario
+=======
+    // ✅ Mostrar datos del usuario
+>>>>>>> a7a79ac (Actualizacion del Login)
     document.addEventListener('DOMContentLoaded', function() {
         const nombre = localStorage.getItem('nombreCompleto') || 'Usuario';
         document.getElementById('welcomeTitle').textContent = `¡Bienvenido, ${nombre}!`;
@@ -69,4 +87,64 @@
         document.getElementById('userTipo').textContent = localStorage.getItem('usuarioTipo') || '-';
         document.getElementById('userId').textContent = localStorage.getItem('usuarioId') || '-';
     });
+<<<<<<< HEAD
+=======
+
+    // ✅ FUNCIONES PARA ABRIR MICROSERVICIOS
+    function abrirUsuarios() {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('Debe iniciar sesión primero');
+            window.location.href = '/Login';
+            return;
+        }
+        const url = 'https://localhost:7206/Usuarios?token=' + encodeURIComponent(token);
+        window.open(url, '_blank');
+    }
+
+    function abrirTiposUsuario() {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('Debe iniciar sesión primero');
+            window.location.href = '/Login';
+            return;
+        }
+        const url = 'https://localhost:7020/TiposUsuario?token=' + encodeURIComponent(token);
+        window.open(url, '_blank');
+    }
+
+    function abrirTiposIdentificacion() {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('Debe iniciar sesión primero');
+            window.location.href = '/Login';
+            return;
+        }
+        const url = 'https://localhost:7021/TiposIdentificacion?token=' + encodeURIComponent(token);
+        window.open(url, '_blank');
+
+
+    }
+        function abrirTiposUsuario() {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('Debe iniciar sesión primero');
+            window.location.href = '/Login';
+            return;
+        }
+        const url = 'https://localhost:7020/TiposUsuario?token=' + encodeURIComponent(token);
+        window.open(url, '_blank');
+    }
+
+    function abrirTiposIdentificacion() {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('Debe iniciar sesión primero');
+            window.location.href = '/Login';
+            return;
+        }
+        const url = 'https://localhost:7021/TiposIdentificacion?token=' + encodeURIComponent(token);
+        window.open(url, '_blank');
+    }
+>>>>>>> a7a79ac (Actualizacion del Login)
 </script>
