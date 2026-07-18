@@ -1,30 +1,20 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "http": {
+    "https": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-<<<<<<< HEAD
-      "launchUrl": "", // ← Vacío para la raíz
-=======
       "launchUrl": "Login",
->>>>>>> a7a79ac (Actualizacion del Login)
-      "applicationUrl": "http://localhost:5129",
+      "applicationUrl": "https://localhost:7019;http://localhost:5019",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "https": {
+    "http": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-<<<<<<< HEAD
-      "launchUrl": "",
-=======
       "launchUrl": "Login",
->>>>>>> a7a79ac (Actualizacion del Login)
-      "applicationUrl": "https://localhost:7019;http://localhost:5129",
+      "applicationUrl": "http://localhost:5019",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
