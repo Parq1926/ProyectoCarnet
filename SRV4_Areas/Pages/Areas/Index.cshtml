@@ -1,5 +1,4 @@
 ﻿@page
-@model SRV4_Areas.Pages.Areas.IndexModel
 @{
     ViewData["Title"] = "Administracion de Areas";
     Layout = "~/Pages/Shared/_Layout.cshtml";
@@ -59,7 +58,7 @@
 <!-- MODAL CREAR / EDITAR -->
 <!-- ======================================== -->
 <div class="modal" id="modalFormulario">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="max-width:500px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="tituloModal">Nueva Area</h5>
@@ -67,23 +66,27 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="idArea" value="0">
-
                 <div class="form-group">
                     <label>Nombre *</label>
                     <input id="nombre" class="form-control" placeholder="Nombre del area">
                     <div class="invalid-feedback" id="errNombre"></div>
                 </div>
-
                 <div class="form-group">
-                    <label>Nombre Institucion *</label>
-                    <input id="institucionNombre" class="form-control" placeholder="Nombre de la institucion">
+                    <label>Institución ID *</label>
+                    <input id="institucionId" type="number" class="form-control" placeholder="ID de la institución">
+                    <div class="invalid-feedback" id="errInstitucionId"></div>
+                </div>
+                <div class="form-group">
+                    <label>Nombre de la Institución *</label>
+                    <input id="institucionNombre" class="form-control" placeholder="Nombre de la institución">
                     <div class="invalid-feedback" id="errInstitucionNombre"></div>
                 </div>
-
-                <div class="form-group">
-                    <label>ID Institucion *</label>
-                    <input id="institucionID" type="number" class="form-control" placeholder="ID de la institucion">
-                    <div class="invalid-feedback" id="errInstitucionID"></div>
+                <div class="form-group" id="activoContainer" style="display:none;">
+                    <label>Activo</label>
+                    <select id="activo" class="form-control">
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -107,7 +110,7 @@
                 <button class="btn-close" onclick="cerrarModalEliminar()">&times;</button>
             </div>
             <div class="modal-body">
-                <p>Esta seguro de eliminar el area <strong id="nombreEliminar"></strong>?</p>
+                <p>¿Esta seguro de eliminar el area <strong id="nombreEliminar"></strong>?</p>
                 <p style="color: #6c757d; font-size: 14px;">Esta accion no se puede deshacer.</p>
             </div>
             <div class="modal-footer">
@@ -121,8 +124,99 @@
 </div>
 
 <script>
-    const API_URL = window.location.origin + '/areas';
+    // ========================================
+    // 🔐 VERIFICAR TOKEN EN LOCALSTORAGE
+    // ========================================
+        // ========================================
+    // 🔐 VERIFICAR TOKEN EN LOCALSTORAGE
+    // ========================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const storedToken = localStorage.getItem('accessToken');
+        console.log('=== AREAS SRV4 ===');
+        console.log('Token en localStorage:', storedToken ? 'SÍ existe' : 'NO existe');
+
+        if (!storedToken) {
+            console.log('❌ No hay token, redirigiendo a Login');
+            localStorage.setItem('redirectMessage', 'Por favor inicie sesión para utilizar el sistema');
+            // ✅ USAR URL RELATIVA
+            window.location.href = '/Login';
+            return;
+        }
+
+        console.log('✅ Token válido, cargando areas...');
+        cargarAreas();
+    });
+
+    // ========================================
+    // CONFIGURACIÓN
+    // ========================================
+    const API_URL = '/api/Areas';
     let idEliminar = 0;
+
+    // ========================================
+    // 🔐 FUNCIONES PARA OBTENER TOKEN
+    // ========================================
+
+    function getToken() {
+        return localStorage.getItem('accessToken');
+    }
+
+    function getHeaders() {
+        const token = getToken();
+        if (!token) {
+            mostrarAlerta('No hay sesión activa. Redirigiendo...', 'warning');
+            setTimeout(function() {
+                window.location.href = 'https://localhost:7019/Login';
+            }, 1500);
+            return null;
+        }
+        return {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        };
+    }
+
+    // ========================================
+    // 🔐 FUNCIÓN PARA VERIFICAR Y REDIRIGIR SI 401
+    // ========================================
+
+        // ========================================
+    // 🔐 FUNCIÓN PARA VERIFICAR Y REDIRIGIR SI 401
+    // ========================================
+
+    function handleUnauthorized(response) {
+        if (response.status === 401) {
+            console.log('❌ Token inválido o expirado, redirigiendo a Login');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('nombreCompleto');
+            localStorage.removeItem('usuarioTipo');
+            localStorage.removeItem('usuarioId');
+            localStorage.setItem('redirectMessage', 'Su sesión ha expirado. Por favor inicie sesión nuevamente.');
+            // ✅ USAR URL RELATIVA
+            window.location.href = '/Login';
+            return true;
+        }
+        return false;
+    }
+    // ========================================
+    // ALERTAS Y LOADING
+    // ========================================
+
+    function mostrarAlerta(mensaje, tipo) {
+        const div = document.getElementById('alertas');
+        div.innerHTML = `
+            <div class="alert alert-${tipo} alert-dismissible">
+                ${mensaje}
+                <button onclick="this.parentElement.remove()" style="float:right; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+            </div>
+        `;
+        setTimeout(() => { div.innerHTML = ''; }, 4000);
+    }
+
+    function mostrarLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+    }
 
     // ========================================
     // FUNCIONES DE MODALES
@@ -132,8 +226,9 @@
         document.getElementById('tituloModal').textContent = 'Nueva Area';
         document.getElementById('idArea').value = '0';
         document.getElementById('nombre').value = '';
+        document.getElementById('institucionId').value = '';
         document.getElementById('institucionNombre').value = '';
-        document.getElementById('institucionID').value = '';
+        document.getElementById('activoContainer').style.display = 'none';
         limpiarErrores();
         document.getElementById('modalFormulario').style.display = 'flex';
     }
@@ -165,83 +260,6 @@
     }
 
     // ========================================
-    // ALERTAS Y LOADING
-    // ========================================
-
-    function mostrarAlerta(mensaje, tipo) {
-        const div = document.getElementById('alertas');
-        div.innerHTML = `
-            <div class="alert alert-${tipo} alert-dismissible">
-                ${mensaje}
-                <button onclick="this.parentElement.remove()" style="float:right; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
-            </div>
-        `;
-        setTimeout(() => { div.innerHTML = ''; }, 4000);
-    }
-
-    function mostrarLoading(show) {
-        document.getElementById('loading').style.display = show ? 'block' : 'none';
-    }
-
-    // ========================================
-    // BUSCAR POR ID
-    // ========================================
-
-    async function buscarAreaPorId() {
-        const id = document.getElementById('buscarId').value.trim();
-
-        if (!id || parseInt(id) <= 0) {
-            mostrarAlerta('Ingrese un ID valido mayor a 0', 'warning');
-            return;
-        }
-
-        const resultadoDiv = document.getElementById('buscarResultado');
-        resultadoDiv.style.display = 'block';
-        resultadoDiv.innerHTML = '<div class="loading"><div class="spinner-border"></div><p>Buscando...</p></div>';
-
-        try {
-            const response = await fetch(`${API_URL}/${id}`);
-
-            if (response.status === 404) {
-                resultadoDiv.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> No se encontro ningun area con ID ${id}
-                    </div>
-                `;
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error('Error al buscar');
-            }
-
-            const a = await response.json();
-
-            resultadoDiv.innerHTML = `
-                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #dee2e6;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:14px;">
-                        <div><strong>ID:</strong> ${a.id}</div>
-                        <div><strong>Nombre:</strong> ${a.nombre}</div>
-                        <div><strong>Institucion:</strong> ${a.institucionNombre}</div>
-                        <div><strong>ID Institucion:</strong> ${a.institucionID}</div>
-                        <div><strong>Estado:</strong> <span class="${a.activo ? 'badge-success' : 'badge-danger'}">${a.activo ? 'Activo' : 'Inactivo'}</span></div>
-                    </div>
-                    <div style="margin-top:10px; display:flex; gap:8px;">
-                        <button class="btn btn-warning btn-sm" onclick="editarArea(${a.id})">Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="abrirModalEliminar(${a.id}, '${a.nombre}')">Eliminar</button>
-                        <button class="btn btn-secondary btn-sm" onclick="cerrarModalBuscar()">Cerrar</button>
-                    </div>
-                </div>
-            `;
-
-        } catch (error) {
-            resultadoDiv.innerHTML = `
-                <div class="alert alert-danger">Error al buscar: ${error.message}</div>
-            `;
-        }
-    }
-
-    // ========================================
     // VALIDACIONES
     // ========================================
 
@@ -262,18 +280,24 @@
         limpiarErrores();
 
         const nombre = document.getElementById('nombre').value.trim();
+        const institucionId = document.getElementById('institucionId').value;
         const institucionNombre = document.getElementById('institucionNombre').value.trim();
-        const institucionID = document.getElementById('institucionID').value.trim();
 
-        if (!nombre) { mostrarError('nombre', 'El nombre es requerido'); valido = false; }
-
-        if (!institucionNombre) {
-            mostrarError('institucionNombre', 'El nombre de institucion es requerido');
+        if (!nombre) {
+            mostrarError('nombre', 'El nombre es requerido');
+            valido = false;
+        } else if (nombre.length < 3 || nombre.length > 100) {
+            mostrarError('nombre', 'El nombre debe tener entre 3 y 100 caracteres');
             valido = false;
         }
 
-        if (!institucionID || parseInt(institucionID) <= 0) {
-            mostrarError('institucionID', 'ID de institucion requerido y mayor a 0');
+        if (!institucionId || parseInt(institucionId) <= 0) {
+            mostrarError('institucionId', 'La institución es requerida');
+            valido = false;
+        }
+
+        if (!institucionNombre) {
+            mostrarError('institucionNombre', 'El nombre de la institución es requerido');
             valido = false;
         }
 
@@ -281,87 +305,158 @@
     }
 
     function obtenerDatosFormulario() {
+        const id = document.getElementById('idArea').value;
+        const isEdit = id !== '0';
+
         const data = {
             nombre: document.getElementById('nombre').value.trim(),
-            institucionNombre: document.getElementById('institucionNombre').value.trim(),
-            institucionID: parseInt(document.getElementById('institucionID').value)
+            institucionId: parseInt(document.getElementById('institucionId').value),
+            institucionNombre: document.getElementById('institucionNombre').value.trim()
         };
 
-        const id = document.getElementById('idArea').value;
-        if (id !== '0') {
-            data.ID = parseInt(id);
+        if (isEdit) {
+            data.id = parseInt(id);
+            data.activo = document.getElementById('activo').value === 'true';
         }
 
         return data;
     }
 
     // ========================================
-    // CRUD - LISTAR TODOS
+    // BUSCAR POR ID
     // ========================================
 
-    async function cargarAreas() {
-        const container = document.getElementById('listaAreas');
-        mostrarLoading(true);
+    async function buscarAreaPorId() {
+        const id = document.getElementById('buscarId').value.trim();
+        if (!id || parseInt(id) <= 0) {
+            mostrarAlerta('Ingrese un ID valido mayor a 0', 'warning');
+            return;
+        }
+
+        const headers = getHeaders();
+        if (!headers) return;
+
+        const resultadoDiv = document.getElementById('buscarResultado');
+        resultadoDiv.style.display = 'block';
+        resultadoDiv.innerHTML = '<div class="loading"><div class="spinner-border"></div><p>Buscando...</p></div>';
 
         try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error('Error al cargar');
-            const areas = await response.json();
+            const response = await fetch(`${API_URL}/${id}`, { headers });
 
-            if (!areas || areas.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-building fa-4x"></i>
-                        <p>No hay areas registradas</p>
-                        <button class="btn btn-primary" onclick="abrirModalCrear()">
-                            <i class="fas fa-plus"></i> Crear primera area
-                        </button>
+            if (handleUnauthorized(response)) return;
+
+            if (response.status === 404) {
+                resultadoDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No se encontro ninguna area con ID ${id}
                     </div>
                 `;
-                mostrarLoading(false);
                 return;
             }
 
-            let html = '';
-            areas.forEach(function(a) {
-                html += `
-                    <div class="area-card">
-                        <div class="area-card-header">
-                            <h3>${a.nombre}</h3>
-                            <span class="${a.activo ? 'badge-success' : 'badge-danger'}">${a.activo ? 'Activo' : 'Inactivo'}</span>
-                        </div>
-                        <div class="area-card-body">
-                            <div class="info-row">
-                                <span class="label"><i class="fas fa-university"></i> Institucion:</span>
-                                <span class="value">${a.institucionNombre}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="label"><i class="fas fa-id-badge"></i> ID Institucion:</span>
-                                <span class="value">${a.institucionID}</span>
-                            </div>
-                        </div>
-                        <div class="area-card-footer">
-                            <button class="btn-sm btn-info" onclick="editarArea(${a.id})">
-                                <i class="fas fa-edit"></i> Editar
-                            </button>
-                            <button class="btn-sm btn-danger" onclick="abrirModalEliminar(${a.id}, '${a.nombre}')">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
+            if (!response.ok) throw new Error('Error al buscar');
+            const data = await response.json();
 
-            container.innerHTML = html;
-        } catch (error) {
-            container.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i> Error al cargar areas
+            resultadoDiv.innerHTML = `
+                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #dee2e6;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:14px;">
+                        <div><strong>ID:</strong> ${data.id}</div>
+                        <div><strong>Nombre:</strong> ${data.nombre}</div>
+                        <div><strong>Institución:</strong> ${data.institucionNombre}</div>
+                        <div><strong>Estado:</strong> <span class="${data.activo ? 'badge-success' : 'badge-danger'}">${data.activo ? 'Activo' : 'Inactivo'}</span></div>
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:8px;">
+                        <button class="btn btn-warning btn-sm" onclick="editarArea(${data.id})">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="abrirModalEliminar(${data.id}, '${data.nombre}')">Eliminar</button>
+                        <button class="btn btn-secondary btn-sm" onclick="cerrarModalBuscar()">Cerrar</button>
+                    </div>
                 </div>
             `;
+
+        } catch (error) {
+            resultadoDiv.innerHTML = `<div class="alert alert-danger">Error al buscar: ${error.message}</div>`;
+        }
+    }
+
+    // ========================================
+    // CRUD - LISTAR TODOS
+    // ========================================
+
+    function renderizarAreas(areas) {
+        const container = document.getElementById('listaAreas');
+
+        if (!areas || areas.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-building fa-4x"></i>
+                    <p>No hay areas registradas</p>
+                    <button class="btn btn-primary" onclick="abrirModalCrear()">
+                        <i class="fas fa-plus"></i> Crear primer area
+                    </button>
+                </div>
+            `;
+            return;
         }
 
-        mostrarLoading(false);
+        let html = '';
+        areas.forEach(function(a) {
+            html += `
+                <div class="area-card">
+                    <div class="area-card-header">
+                        <h3>${a.nombre}</h3>
+                        <span class="${a.activo ? 'badge-success' : 'badge-danger'}">${a.activo ? 'Activo' : 'Inactivo'}</span>
+                    </div>
+                    <div class="area-card-body">
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-id-badge"></i> ID:</span>
+                            <span class="value">${a.id}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-university"></i> Institución:</span>
+                            <span class="value">${a.institucionNombre}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-calendar"></i> Creación:</span>
+                            <span class="value">${new Date(a.fechaCreacion).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <div class="area-card-footer">
+                        <button class="btn-sm btn-info" onclick="editarArea(${a.id})">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn-sm btn-danger" onclick="abrirModalEliminar(${a.id}, '${a.nombre}')">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    async function cargarAreas() {
+        const headers = getHeaders();
+        if (!headers) return;
+
+        try {
+            mostrarLoading(true);
+            const response = await fetch(API_URL, { headers });
+
+            if (handleUnauthorized(response)) return;
+
+            if (!response.ok) throw new Error('Error al cargar');
+            const data = await response.json();
+            renderizarAreas(data);
+        } catch (error) {
+            document.getElementById('listaAreas').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Error al cargar areas: ${error.message}
+                </div>
+            `;
+        } finally {
+            mostrarLoading(false);
+        }
     }
 
     // ========================================
@@ -370,6 +465,9 @@
 
     async function guardarArea() {
         if (!validarFormulario()) return;
+
+        const headers = getHeaders();
+        if (!headers) return;
 
         const id = document.getElementById('idArea').value;
         const data = obtenerDatosFormulario();
@@ -380,9 +478,11 @@
         try {
             const response = await fetch(url, {
                 method: method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify(data)
             });
+
+            if (handleUnauthorized(response)) return;
 
             if (response.ok) {
                 mostrarAlerta(isEdit ? 'Area actualizada' : 'Area creada', 'success');
@@ -399,20 +499,28 @@
     }
 
     // ========================================
-    // CRUD - EDITAR (OBTENER POR ID + LLENAR MODAL)
+    // CRUD - EDITAR (OBTENER POR ID)
     // ========================================
 
     async function editarArea(id) {
+        const headers = getHeaders();
+        if (!headers) return;
+
         try {
-            const response = await fetch(`${API_URL}/${id}`);
+            const response = await fetch(`${API_URL}/${id}`, { headers });
+
+            if (handleUnauthorized(response)) return;
+
             if (!response.ok) throw new Error('Error al obtener datos');
-            const a = await response.json();
+            const data = await response.json();
 
             document.getElementById('tituloModal').textContent = 'Editar Area';
-            document.getElementById('idArea').value = a.id;
-            document.getElementById('nombre').value = a.nombre;
-            document.getElementById('institucionNombre').value = a.institucionNombre;
-            document.getElementById('institucionID').value = a.institucionID;
+            document.getElementById('idArea').value = data.id;
+            document.getElementById('nombre').value = data.nombre;
+            document.getElementById('institucionId').value = data.institucionId;
+            document.getElementById('institucionNombre').value = data.institucionNombre;
+            document.getElementById('activo').value = data.activo ? 'true' : 'false';
+            document.getElementById('activoContainer').style.display = 'block';
             limpiarErrores();
             document.getElementById('modalFormulario').style.display = 'flex';
         } catch (error) {
@@ -425,28 +533,350 @@
     // ========================================
 
     async function eliminarArea() {
+        const headers = getHeaders();
+        if (!headers) return;
+
         try {
-            const response = await fetch(`${API_URL}/${idEliminar}`, { method: 'DELETE' });
-            const result = await response.json();
+            const response = await fetch(`${API_URL}/${idEliminar}`, {
+                method: 'DELETE',
+                headers: headers
+            });
+
+            if (handleUnauthorized(response)) return;
 
             if (response.ok) {
                 cerrarModalEliminar();
-                mostrarAlerta(result.message || 'Area eliminada exitosamente', 'success');
+                mostrarAlerta('Area eliminada correctamente', 'success');
                 cargarAreas();
                 cerrarModalBuscar();
             } else {
-                mostrarAlerta(result.error || 'Error al eliminar', 'danger');
+                const error = await response.json();
+                mostrarAlerta(error.error || 'Error al eliminar', 'danger');
             }
         } catch (error) {
             mostrarAlerta('Error de conexion: ' + error.message, 'danger');
         }
     }
-
-    // ========================================
-    // INICIALIZAR
-    // ========================================
-
-    document.addEventListener('DOMContentLoaded', function() {
-        cargarAreas();
-    });
 </script>
+
+<style>
+    .area-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .area-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+        .area-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+    .area-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+
+        .area-card-header h3 {
+            color: #003366;
+            font-size: 18px;
+            margin: 0;
+        }
+
+    .info-row {
+        display: flex;
+        padding: 4px 0;
+        font-size: 14px;
+    }
+
+        .info-row .label {
+            color: #6c757d;
+            min-width: 100px;
+        }
+
+        .info-row .value {
+            color: #333;
+        }
+
+    .area-card-footer {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .badge-success {
+        background: #d4edda;
+        color: #155724;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .badge-danger {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .btn-sm {
+        padding: 4px 12px;
+        font-size: 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+
+        .btn-info:hover {
+            background: #117a8b;
+        }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background: #bd2130;
+        }
+
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+    .btn-primary {
+        background: #003366;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background: #001a33;
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+        .form-control:focus {
+            border-color: #003366;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+        }
+
+    .is-invalid {
+        border-color: #dc3545;
+    }
+
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 4px;
+        display: block;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-dialog {
+        max-width: 500px;
+        margin: auto;
+        width: 90%;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        background: #003366;
+        color: white;
+        border-radius: 12px 12px 0 0;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .modal-header .btn-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        background: #f8f9fa;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+    }
+
+        .empty-state i {
+            color: #dee2e6;
+            margin-bottom: 16px;
+        }
+
+        .empty-state p {
+            font-size: 18px;
+            color: #6c757d;
+        }
+
+    .loading {
+        text-align: center;
+        padding: 40px 0;
+    }
+
+    .spinner-border {
+        display: inline-block;
+        width: 3rem;
+        height: 3rem;
+        border: 0.25em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border 0.75s linear infinite;
+        color: #003366;
+    }
+
+    @@keyframes spinner-border {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+        .page-header h2 {
+            color: #003366;
+            margin: 0;
+            font-size: 24px;
+        }
+
+    .alert {
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .alert-dismissible {
+        position: relative;
+    }
+
+        .alert-dismissible button {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+</style>

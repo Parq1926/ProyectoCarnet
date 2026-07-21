@@ -25,14 +25,15 @@ public class AreaRepository : IAreaRepository
     public async Task<IEnumerable<AreaTrabajo>> GetAll()
     {
         using var connection = _connectionFactory.CreateConnection();
-        const string sql = "SELECT * FROM AreaTrabajo WHERE Activo = 1 ORDER BY ID";
+        // ✅ Usar dbo explícitamente
+        const string sql = "SELECT * FROM dbo.AreaTrabajo WHERE Activo = 1 ORDER BY ID";
         return await connection.QueryAsync<AreaTrabajo>(sql);
     }
 
     public async Task<AreaTrabajo?> GetById(int id)
     {
         using var connection = _connectionFactory.CreateConnection();
-        const string sql = "SELECT * FROM AreaTrabajo WHERE ID = @Id AND Activo = 1";
+        const string sql = "SELECT * FROM dbo.AreaTrabajo WHERE ID = @Id AND Activo = 1";
         return await connection.QueryFirstOrDefaultAsync<AreaTrabajo>(sql, new { Id = id });
     }
 
@@ -40,7 +41,7 @@ public class AreaRepository : IAreaRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = @"
-            INSERT INTO AreaTrabajo (Nombre, InstitucionID, InstitucionNombre, Activo, FechaCreacion)
+            INSERT INTO dbo.AreaTrabajo (Nombre, InstitucionID, InstitucionNombre, Activo, FechaCreacion)
             VALUES (@Nombre, @InstitucionID, @InstitucionNombre, 1, GETDATE());
             SELECT CAST(SCOPE_IDENTITY() as int)";
         return await connection.QuerySingleAsync<int>(sql, area);
@@ -50,7 +51,7 @@ public class AreaRepository : IAreaRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = @"
-            UPDATE AreaTrabajo 
+            UPDATE dbo.AreaTrabajo 
             SET Nombre = @Nombre, InstitucionID = @InstitucionID, InstitucionNombre = @InstitucionNombre, FechaModificacion = GETDATE()
             WHERE ID = @ID AND Activo = 1";
         var rows = await connection.ExecuteAsync(sql, area);
@@ -60,7 +61,7 @@ public class AreaRepository : IAreaRepository
     public async Task<bool> Delete(int id)
     {
         using var connection = _connectionFactory.CreateConnection();
-        const string sql = "UPDATE AreaTrabajo SET Activo = 0 WHERE ID = @Id";
+        const string sql = "UPDATE dbo.AreaTrabajo SET Activo = 0 WHERE ID = @Id";
         var rows = await connection.ExecuteAsync(sql, new { Id = id });
         return rows > 0;
     }
@@ -68,7 +69,7 @@ public class AreaRepository : IAreaRepository
     public async Task<bool> ExistsByNombre(string nombre, int? excludeId = null)
     {
         using var connection = _connectionFactory.CreateConnection();
-        string sql = "SELECT COUNT(1) FROM AreaTrabajo WHERE Nombre = @Nombre AND Activo = 1";
+        string sql = "SELECT COUNT(1) FROM dbo.AreaTrabajo WHERE Nombre = @Nombre AND Activo = 1";
         if (excludeId.HasValue)
             sql += " AND ID != @ExcludeId";
 

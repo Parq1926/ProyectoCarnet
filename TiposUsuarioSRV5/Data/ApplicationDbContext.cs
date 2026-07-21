@@ -1,29 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-<<<<<<< HEAD
-using SRV5_TipoUsuario.Entities;
-
-namespace SRV5_TipoUsuario.Data;
-
-public class ApplicationDbContext : DbContext
-{
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-
-    public DbSet<TipoUsuario> TiposUsuario { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<TipoUsuario>().ToTable("TIPOUSUARIO", "PameRojas");
-
-        modelBuilder.Entity<TipoUsuario>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("ID");
-            entity.Property(e => e.Nombre).HasColumnName("NOMBRE");
-            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
-        });
-=======
+using Microsoft.EntityFrameworkCore;
 using TiposUsuarioSRV5.Entities;
 
 namespace TiposUsuarioSRV5.Data
@@ -45,10 +20,15 @@ namespace TiposUsuarioSRV5.Data
             {
                 entity.ToTable("TIPOUSUARIO", "PameRojas");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasColumnName("ID").ValueGeneratedOnAdd();
-                entity.Property(e => e.Nombre).HasColumnName("NOMBRE").IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Id)
+                    .HasColumnName("ID")
+                    .ValueGeneratedOnAdd();
+                entity.Property(e => e.Nombre)
+                    .HasColumnName("NOMBRE")
+                    .IsRequired()
+                    .HasMaxLength(50);
+                entity.HasIndex(e => e.Nombre).IsUnique();
             });
         }
->>>>>>> a7a79ac (Actualizacion del Login)
     }
 }

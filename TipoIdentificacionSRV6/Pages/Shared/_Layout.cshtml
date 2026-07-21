@@ -69,6 +69,17 @@
             function toggleSidebar() {
                 document.getElementById('sidebar').classList.toggle('open');
             }
+
+            // ✅ Verificar token al cargar
+            document.addEventListener('DOMContentLoaded', function() {
+                const token = localStorage.getItem('accessToken');
+                console.log('Layout TiposIdentificacion - Token:', token ? 'SÍ existe' : 'NO existe');
+
+                if (!token) {
+                    console.log('❌ No hay token, redirigiendo a Login');
+                    window.location.href = 'https://localhost:7019/Login';
+                }
+            });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

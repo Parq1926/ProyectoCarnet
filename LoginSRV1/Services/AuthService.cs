@@ -1,140 +1,334 @@
-<<<<<<< HEAD
-﻿// Services/AuthService.cs
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using LoginSRV1.Data;
 using LoginSRV1.DTOs;
-=======
-﻿using LoginSRV1.DTOs;
->>>>>>> a7a79ac (Actualizacion del Login)
-using Microsoft.AspNetCore.Http;
+using LoginSRV1.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace LoginSRV1.Services
 {
     public class AuthService : IAuthService
     {
-<<<<<<< HEAD
-        private readonly ILoginApiClient _loginApiClient;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ApplicationDbContext _db;
+        private readonly HttpClient _http;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthService> _logger;
 
         public AuthService(
-            ILoginApiClient loginApiClient,
-            IHttpContextAccessor httpContextAccessor)
+            ApplicationDbContext db,
+            HttpClient http,
+            IConfiguration configuration,
+            ILogger<AuthService> logger)
         {
-            _loginApiClient = loginApiClient;
-            _httpContextAccessor = httpContextAccessor;
-        }
+            _db = db;
+            _http = http;
+            _configuration = configuration;
+            _logger = logger;
 
-        private ISession Session => _httpContextAccessor.HttpContext?.Session!;
-
-        
-        public async Task<LoginResponseDto?> LoginAsync(string usuario, string contrasena, string tipo)
-        {
-            var loginDto = new LoginDto
+            if (_http.BaseAddress == null)
             {
-                Usuario = usuario,
-                Contrasena = contrasena,
-                Tipo = tipo
-            };
-
-            var response = await _loginApiClient.LoginAsync(loginDto);
-
-            if (response != null && response.Codigo == 200)
-            {
-                Session.SetString("AccessToken", response.AccessToken);
-                Session.SetString("RefreshToken", response.RefreshToken);
-                Session.SetInt32("UsuarioId", response.UsuarioId);
-                Session.SetString("UsuarioEmail", usuario);
-                Session.SetString("UsuarioTipo", tipo);
-                Session.SetString("NombreCompleto", usuario);
+                var usuariosUrl = _configuration["Services:UsuariosSRV4"] ?? "https://localhost:7206";
+                _http.BaseAddress = new Uri(usuariosUrl);
+                _logger.LogInformation($"BaseAddress configurado en: {_http.BaseAddress}");
             }
-
-            return response;
-=======
-        private readonly IUsuarioApiClient _usuarioApiClient;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ISession _session;
-
-        public AuthService(
-            IUsuarioApiClient usuarioApiClient,
-            IHttpContextAccessor httpContextAccessor)
-        {
-            _usuarioApiClient = usuarioApiClient;
-            _httpContextAccessor = httpContextAccessor;
-            _session = _httpContextAccessor.HttpContext?.Session!;
         }
 
-        public async Task<LoginResponseDto?> LoginAsync(string usuario, string contrasena, string tipo)
+        public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
         {
-            var response = await _usuarioApiClient.ValidarCredencialesAsync(usuario, contrasena, tipo);
-
-            if (response != null)
+            try
             {
-                _session.SetString("AccessToken", "token-temp");
-                _session.SetInt32("UsuarioId", response.Id);
-                _session.SetString("UsuarioEmail", usuario);
-                _session.SetString("UsuarioTipo", tipo);
-                _session.SetString("NombreCompleto", response.NombreCompleto);
+                _logger.LogInformation("=== INICIO LOGIN ===");
+                _logger.LogInformation($"Email: {request.Email}");
+                _logger.LogInformation($"TipoUsuario: {request.TipoUsuario}");
+
+                var requestData = new
+                {
+                    email = request.Email,
+                    password = request.Password,
+                    tipo = request.TipoUsuario ?? ""
+                };
+
+                _logger.LogInformation($"Enviando a UsuariosSRV4: {JsonSerializer.Serialize(requestData)}");
+
+                var response = await _http.PostAsJsonAsync("api/Usuarios/validar-credenciales", requestData);
+
+                var statusCode = response.StatusCode;
+                _logger.LogInformation($"Status Code: {statusCode}");
+
+                if (statusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    _logger.LogWarning("Credenciales inválidas");
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = "Credenciales inválidas"
+                    };
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogWarning($"Error en UsuariosSRV4: {statusCode} - {errorContent}");
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = $"Error del servidor: {statusCode}"
+                    };
+                }
+
+                var userResponse = await response.Content.ReadFromJsonAsync<ValidarCredencialesResponse>();
+
+                if (userResponse == null)
+                {
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = "Usuario no encontrado"
+                    };
+                }
+
+                _logger.LogInformation($"Usuario encontrado: ID={userResponse.Id}, Email={userResponse.Email}, Tipo={userResponse.TipoUsuario}");
+
+                if (!userResponse.Activo)
+                {
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = "Usuario inactivo"
+                    };
+                }
+
+                if (userResponse.Bloqueado)
+                {
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = "Usuario bloqueado por intentos fallidos"
+                    };
+                }
+
+                var user = new UserInfoDto
+                {
+                    Id = userResponse.Id,
+                    Email = userResponse.Email,
+                    NombreCompleto = userResponse.NombreCompleto,
+                    TipoUsuario = userResponse.TipoUsuario,
+                    Activo = userResponse.Activo,
+                    TipoUsuarioId = 1
+                };
+
+                var accessToken = GenerateAccessToken(user);
+                var refreshToken = GenerateRefreshToken();
+
+                // ✅ Guardar refresh token (SOLO columnas que existen)
+                var refreshTokenEntity = new RefreshToken
+                {
+                    Token = refreshToken,
+                    UserId = user.Id,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    CreatedAt = DateTime.UtcNow,
+                    IsRevoked = false
+                };
+
+                _db.RefreshTokens.Add(refreshTokenEntity);
+                await _db.SaveChangesAsync();
 
                 return new LoginResponseDto
                 {
-                    Codigo = 200,
-                    Mensaje = "Login exitoso",
-                    UsuarioId = response.Id,
-                    Institutions = new[] { "CUC" }
+                    Success = true,
+                    Message = "Login exitoso",
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+                    TokenType = "Bearer",
+                    ExpiresIn = 3600,
+                    User = user
                 };
             }
-
-            return new LoginResponseDto
+            catch (Exception ex)
             {
-                Codigo = 401,
-                Mensaje = "Usuario y/o contraseña incorrectos"
+                _logger.LogError($"Error en LoginAsync: {ex.Message}");
+                return new LoginResponseDto
+                {
+                    Success = false,
+                    Message = $"Error al autenticar: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<LoginResponseDto> RefreshTokenAsync(string refreshToken)
+        {
+            try
+            {
+                var storedToken = await _db.RefreshTokens
+                    .FirstOrDefaultAsync(rt => rt.Token == refreshToken && !rt.IsRevoked);
+
+                if (storedToken == null)
+                {
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = "Refresh token inválido"
+                    };
+                }
+
+                if (storedToken.ExpiresAt < DateTime.UtcNow)
+                {
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = "Refresh token expirado"
+                    };
+                }
+
+                var response = await _http.GetAsync($"api/Usuarios/{storedToken.UserId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = "Usuario no encontrado"
+                    };
+                }
+
+                var user = await response.Content.ReadFromJsonAsync<UserInfoDto>();
+
+                if (user == null || !user.Activo)
+                {
+                    return new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = "Usuario inactivo"
+                    };
+                }
+
+                storedToken.IsRevoked = true;
+                await _db.SaveChangesAsync();
+
+                var newAccessToken = GenerateAccessToken(user);
+                var newRefreshToken = GenerateRefreshToken();
+
+                var newRefreshTokenEntity = new RefreshToken
+                {
+                    Token = newRefreshToken,
+                    UserId = user.Id,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    CreatedAt = DateTime.UtcNow,
+                    IsRevoked = false
+                };
+
+                _db.RefreshTokens.Add(newRefreshTokenEntity);
+                await _db.SaveChangesAsync();
+
+                return new LoginResponseDto
+                {
+                    Success = true,
+                    Message = "Token renovado exitosamente",
+                    AccessToken = newAccessToken,
+                    RefreshToken = newRefreshToken,
+                    TokenType = "Bearer",
+                    ExpiresIn = 3600,
+                    User = user
+                };
+            }
+            catch (Exception ex)
+            {
+                return new LoginResponseDto
+                {
+                    Success = false,
+                    Message = $"Error al renovar token: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<bool> LogoutAsync(string refreshToken)
+        {
+            try
+            {
+                var storedToken = await _db.RefreshTokens
+                    .FirstOrDefaultAsync(rt => rt.Token == refreshToken && !rt.IsRevoked);
+
+                if (storedToken != null)
+                {
+                    storedToken.IsRevoked = true;
+                    await _db.SaveChangesAsync();
+                    return true;
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> ValidateTokenAsync(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"] ?? "YourSuperSecretKeyHere12345678901234567890");
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["Jwt:Issuer"] ?? "CUC",
+                    ValidateAudience = true,
+                    ValidAudience = _configuration["Jwt:Audience"] ?? "CUCApp",
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
+                return principal != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private string GenerateAccessToken(UserInfoDto user)
+        {
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"] ?? "YourSuperSecretKeyHere12345678901234567890");
+            var issuer = _configuration["Jwt:Issuer"] ?? "CUC";
+            var audience = _configuration["Jwt:Audience"] ?? "CUCApp";
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.NombreCompleto),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.TipoUsuario ?? "Usuario"),
+                new Claim("TipoUsuarioId", user.TipoUsuarioId?.ToString() ?? "")
             };
->>>>>>> a7a79ac (Actualizacion del Login)
+
+            var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public Task<bool> LogoutAsync()
+        private string GenerateRefreshToken()
         {
-<<<<<<< HEAD
-            Session.Clear();
-=======
-            _session.Clear();
->>>>>>> a7a79ac (Actualizacion del Login)
-            return Task.FromResult(true);
-        }
-
-        public Task<bool> IsAuthenticatedAsync()
-        {
-<<<<<<< HEAD
-            var token = Session.GetString("AccessToken");
-=======
-            var token = _session.GetString("AccessToken");
->>>>>>> a7a79ac (Actualizacion del Login)
-            return Task.FromResult(!string.IsNullOrEmpty(token));
-        }
-
-        public string? GetAccessToken()
-        {
-<<<<<<< HEAD
-            return Session.GetString("AccessToken");
-=======
-            return _session.GetString("AccessToken");
->>>>>>> a7a79ac (Actualizacion del Login)
-        }
-
-        public string? GetRefreshToken()
-        {
-<<<<<<< HEAD
-            return Session.GetString("RefreshToken");
-=======
-            return _session.GetString("RefreshToken");
->>>>>>> a7a79ac (Actualizacion del Login)
-        }
-
-        public int? GetUsuarioId()
-        {
-<<<<<<< HEAD
-            return Session.GetInt32("UsuarioId");
-=======
-            return _session.GetInt32("UsuarioId");
->>>>>>> a7a79ac (Actualizacion del Login)
+            using var rng = RandomNumberGenerator.Create();
+            var bytes = new byte[64];
+            rng.GetBytes(bytes);
+            return Convert.ToBase64String(bytes);
         }
     }
 }

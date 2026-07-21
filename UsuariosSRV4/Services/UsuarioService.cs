@@ -1,5 +1,4 @@
-﻿// UsuariosSRV4/Services/UsuarioService.cs
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using UsuariosSRV4.Data;
 using UsuariosSRV4.DTOs;
 using UsuariosSRV4.Entities;
@@ -10,406 +9,26 @@ namespace UsuariosSRV4.Services
     public class UsuarioService : IUsuarioService
     {
         private readonly ApplicationDbContext _db;
+        private readonly IAreaApiClient _areaApiClient;
+        private readonly ITipoIdentificacionApiClient _tipoIdentificacionApiClient;
+        private readonly ICarreraApiClient _carreraApiClient;
+        private readonly ITipoUsuarioApiClient _tipoUsuarioApiClient;
 
-        public UsuarioService(ApplicationDbContext db)
+        public UsuarioService(
+            ApplicationDbContext db,
+            IAreaApiClient areaApiClient,
+            ITipoIdentificacionApiClient tipoIdentificacionApiClient,
+            ICarreraApiClient carreraApiClient,
+            ITipoUsuarioApiClient tipoUsuarioApiClient)
         {
             _db = db;
+            _areaApiClient = areaApiClient;
+            _tipoIdentificacionApiClient = tipoIdentificacionApiClient;
+            _carreraApiClient = carreraApiClient;
+            _tipoUsuarioApiClient = tipoUsuarioApiClient;
         }
 
-        public async Task<IEnumerable<UsuarioDto>> GetAllAsync()
-        {
-            return await _db.Usuarios
-                .Where(u => u.Activo)
-                .Include(u => u.Telefonos)
-                .OrderBy(u => u.NombreCompleto)
-                .Select(u => new UsuarioDto
-                {
-                    Id = u.Id,
-                    Email = u.Email,
-                    NumeroIdentificacion = u.NumeroIdentificacion,
-                    NombreCompleto = u.NombreCompleto,
-                    TipoUsuario = GetTipoUsuarioNombre(u.TipoUsuarioId),
-                    TipoIdentificacion = GetTipoIdentificacionNombre(u.TipoIdentificacionId),
-                    Activo = u.Activo,
-                    Bloqueado = u.Bloqueado,
-                    IntentosFallidos = u.IntentosFallidos,
-                    FechaCreacion = u.FechaCreacion,
-                    Telefonos = u.Telefonos != null ? u.Telefonos.Select(t => t.Numero).ToList() : new List<string>()
-                })
-                .ToListAsync();
-        }
-
-        public async Task<UsuarioDto?> GetByIdAsync(int id)
-        {
-            var user = await _db.Usuarios
-                .Include(u => u.Telefonos)
-                .FirstOrDefaultAsync(u => u.Id == id && u.Activo);
-
-            if (user == null) return null;
-
-            return new UsuarioDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                NumeroIdentificacion = user.NumeroIdentificacion,
-                NombreCompleto = user.NombreCompleto,
-                TipoUsuario = GetTipoUsuarioNombre(user.TipoUsuarioId),
-                TipoIdentificacion = GetTipoIdentificacionNombre(user.TipoIdentificacionId),
-                Activo = user.Activo,
-                Bloqueado = user.Bloqueado,
-                IntentosFallidos = user.IntentosFallidos,
-                FechaCreacion = user.FechaCreacion,
-                Telefonos = user.Telefonos != null ? user.Telefonos.Select(t => t.Numero).ToList() : new List<string>()
-            };
-        }
-
-        public async Task<bool> DesbloquearUsuarioAsync(int id)
-        {
-            var user = await _db.Usuarios
-                .FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user == null) return false;
-
-            user.Bloqueado = false;
-            user.Activo = true;
-            user.IntentosFallidos = 0;
-            user.FechaModificacion = DateTime.Now;
-
-            await _db.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<UsuarioDto?> ValidarCredencialesAsync(string email, string password, string tipo)
-        {
-            Console.WriteLine($"=== VALIDANDO CREDENCIALES ===");
-            Console.WriteLine($"Email: {email}");
-
-            var user = await _db.Usuarios
-                .FirstOrDefaultAsync(u => u.Email == email);
-
-            if (user == null)
-            {
-                Console.WriteLine("❌ Usuario no encontrado");
-                return null;
-            }
-
-            // VERIFICAR SI EL USUARIO ESTÁ BLOQUEADO
-            if (user.Bloqueado)
-            {
-                Console.WriteLine("❌ Usuario bloqueado permanentemente");
-                return null;
-            }
-
-            // Verificar si el usuario está activo
-            if (!user.Activo)
-            {
-                Console.WriteLine("❌ Usuario inactivo");
-                return null;
-            }
-
-            // ✅ VERIFICAR CONTRASEÑA CON HASH
-            var passwordHash = PasswordHelper.HashPassword(password);
-            Console.WriteLine($"Hash ingresado: {passwordHash}");
-            Console.WriteLine($"Hash en BD: {user.Contrasena}");
-
-            if (user.Contrasena != passwordHash)
-            {
-                Console.WriteLine("❌ Contraseña incorrecta");
-
-                // INCREMENTAR INTENTOS FALLIDOS
-                user.IntentosFallidos++;
-
-                // SI LLEGA A 3 INTENTOS, BLOQUEAR PERMANENTEMENTE
-                if (user.IntentosFallidos >= 3)
-                {
-                    user.Bloqueado = true;
-                    user.Activo = false;
-                    Console.WriteLine($"❌ Usuario bloqueado permanentemente después de {user.IntentosFallidos} intentos fallidos");
-                }
-
-                await _db.SaveChangesAsync();
-                return null;
-            }
-
-            // LOGIN EXITOSO - RESETEAR INTENTOS FALLIDOS
-            if (user.IntentosFallidos > 0)
-            {
-                user.IntentosFallidos = 0;
-                await _db.SaveChangesAsync();
-            }
-
-            // Verificar tipo
-            var tipoUsuario = GetTipoUsuarioNombre(user.TipoUsuarioId);
-            if (tipoUsuario != tipo)
-            {
-                Console.WriteLine($"❌ Tipo incorrecto: {tipoUsuario} != {tipo}");
-                return null;
-            }
-
-            Console.WriteLine("✅ Login exitoso");
-
-            return new UsuarioDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                NombreCompleto = user.NombreCompleto,
-                TipoUsuario = tipoUsuario,
-                Activo = user.Activo,
-                Bloqueado = user.Bloqueado,
-                IntentosFallidos = user.IntentosFallidos
-            };
-        }
-
-        public async Task<IEnumerable<UsuarioDto>> GetByFilterAsync(FiltroUsuarioDto filtro)
-        {
-            var query = _db.Usuarios
-                .Include(u => u.Telefonos)
-                .Where(u => u.Activo);
-
-            if (!string.IsNullOrEmpty(filtro.Identificacion))
-            {
-                query = query.Where(u => u.NumeroIdentificacion.Contains(filtro.Identificacion));
-            }
-
-            if (!string.IsNullOrEmpty(filtro.Nombre))
-            {
-                query = query.Where(u => u.NombreCompleto.Contains(filtro.Nombre));
-            }
-
-            // ✅ CORREGIDO: Usar el campo directamente en lugar del método
-            if (!string.IsNullOrEmpty(filtro.TipoUsuario))
-            {
-                // Obtener el ID del tipo según el nombre
-                int tipoId = filtro.TipoUsuario switch
-                {
-                    "Estudiante" => 1,
-                    "Funcionario" => 2,
-                    "Administrador" => 3,
-                    _ => 0
-                };
-
-                if (tipoId > 0)
-                {
-                    query = query.Where(u => u.TipoUsuarioId == tipoId);
-                }
-            }
-
-            return await query
-                .OrderBy(u => u.NombreCompleto)
-                .Select(u => new UsuarioDto
-                {
-                    Id = u.Id,
-                    Email = u.Email,
-                    NumeroIdentificacion = u.NumeroIdentificacion,
-                    NombreCompleto = u.NombreCompleto,
-                    TipoUsuario = GetTipoUsuarioNombre(u.TipoUsuarioId),
-                    TipoIdentificacion = GetTipoIdentificacionNombre(u.TipoIdentificacionId),
-                    Activo = u.Activo,
-                    Bloqueado = u.Bloqueado,
-                    IntentosFallidos = u.IntentosFallidos,
-                    FechaCreacion = u.FechaCreacion,
-                    Telefonos = u.Telefonos != null ? u.Telefonos.Select(t => t.Numero).ToList() : new List<string>()
-                })
-                .ToListAsync();
-        }
-
-        public async Task<(bool ok, string error, UsuarioDto? data)> CreateAsync(CrearUsuarioDto dto)
-        {
-            try
-            {
-                if (await ExistsByEmailAsync(dto.Email))
-                {
-                    return (false, $"Ya existe un usuario con el email '{dto.Email}'", null);
-                }
-
-                if (await ExistsByIdentificacionAsync(dto.NumeroIdentificacion))
-                {
-                    return (false, $"Ya existe un usuario con la identificación '{dto.NumeroIdentificacion}'", null);
-                }
-
-                var validacion = await ValidarDominioYTipoAsync(dto.Email, dto.TipoUsuarioId);
-                if (!validacion)
-                {
-                    return (false, "El dominio del email no coincide con el tipo de usuario", null);
-                }
-
-                var entity = new Usuario
-                {
-                    Email = dto.Email.Trim().ToLower(),
-                    Contrasena = dto.Contrasena,  // ✅ Texto plano
-                    TipoIdentificacionId = dto.TipoIdentificacionId,
-                    NumeroIdentificacion = dto.NumeroIdentificacion.Trim(),
-                    NombreCompleto = dto.NombreCompleto.Trim(),
-                    TipoUsuarioId = dto.TipoUsuarioId,
-                    Activo = true,
-                    Bloqueado = false,
-                    IntentosFallidos = 0,
-                    FechaCreacion = DateTime.Now
-                };
-
-                _db.Usuarios.Add(entity);
-                await _db.SaveChangesAsync();
-
-                if (dto.Telefonos != null && dto.Telefonos.Any())
-                {
-                    foreach (var telefono in dto.Telefonos)
-                    {
-                        if (!string.IsNullOrEmpty(telefono))
-                        {
-                            _db.Telefonos.Add(new Telefono
-                            {
-                                UsuarioId = entity.Id,
-                                Numero = telefono.Trim()
-                            });
-                        }
-                    }
-                    await _db.SaveChangesAsync();
-                }
-
-                var result = await GetByIdAsync(entity.Id);
-                return (true, string.Empty, result);
-            }
-            catch (Exception ex)
-            {
-                return (false, $"Error al crear usuario: {ex.Message}", null);
-            }
-        }
-
-        public async Task<(bool ok, string error, UsuarioDto? data)> UpdateAsync(int id, ActualizarUsuarioDto dto)
-        {
-            try
-            {
-                var entity = await _db.Usuarios
-                    .Include(u => u.Telefonos)
-                    .FirstOrDefaultAsync(u => u.Id == id && u.Activo);
-
-                if (entity == null)
-                {
-                    return (false, $"Usuario con ID {id} no encontrado", null);
-                }
-
-                if (await ExistsByEmailAsync(dto.Email, id))
-                {
-                    return (false, $"Ya existe un usuario con el email '{dto.Email}'", null);
-                }
-
-                if (await ExistsByIdentificacionAsync(dto.NumeroIdentificacion, id))
-                {
-                    return (false, $"Ya existe un usuario con la identificación '{dto.NumeroIdentificacion}'", null);
-                }
-
-                var validacion = await ValidarDominioYTipoAsync(dto.Email, dto.TipoUsuarioId);
-                if (!validacion)
-                {
-                    return (false, "El dominio del email no coincide con el tipo de usuario", null);
-                }
-
-                entity.Email = dto.Email.Trim().ToLower();
-                entity.TipoIdentificacionId = dto.TipoIdentificacionId;
-                entity.NumeroIdentificacion = dto.NumeroIdentificacion.Trim();
-                entity.NombreCompleto = dto.NombreCompleto.Trim();
-                entity.TipoUsuarioId = dto.TipoUsuarioId;
-                entity.Activo = dto.Activo;
-                entity.FechaModificacion = DateTime.Now;
-
-                // ✅ Actualizar contraseña (texto plano)
-                if (!string.IsNullOrEmpty(dto.Contrasena))
-                {
-                    entity.Contrasena = dto.Contrasena;
-                }
-
-                if (entity.Telefonos != null)
-                {
-                    _db.Telefonos.RemoveRange(entity.Telefonos);
-                }
-
-                if (dto.Telefonos != null && dto.Telefonos.Any())
-                {
-                    foreach (var telefono in dto.Telefonos)
-                    {
-                        if (!string.IsNullOrEmpty(telefono))
-                        {
-                            _db.Telefonos.Add(new Telefono
-                            {
-                                UsuarioId = entity.Id,
-                                Numero = telefono.Trim()
-                            });
-                        }
-                    }
-                }
-
-                await _db.SaveChangesAsync();
-
-                var result = await GetByIdAsync(id);
-                return (true, string.Empty, result);
-            }
-            catch (Exception ex)
-            {
-                return (false, $"Error al actualizar usuario: {ex.Message}", null);
-            }
-        }
-
-        public async Task<(bool ok, string error)> DeleteAsync(int id)
-        {
-            try
-            {
-                var entity = await _db.Usuarios
-                    .FirstOrDefaultAsync(u => u.Id == id && u.Activo);
-
-                if (entity == null)
-                {
-                    return (false, $"Usuario con ID {id} no encontrado");
-                }
-
-                entity.Activo = false;
-                entity.FechaModificacion = DateTime.Now;
-
-                await _db.SaveChangesAsync();
-                return (true, string.Empty);
-            }
-            catch (Exception ex)
-            {
-                return (false, $"Error al eliminar usuario: {ex.Message}");
-            }
-        }
-
-        public async Task<bool> ExistsByEmailAsync(string email, int? excludeId = null)
-        {
-            var query = _db.Usuarios.Where(u => u.Email == email.Trim().ToLower() && u.Activo);
-            if (excludeId.HasValue)
-            {
-                query = query.Where(u => u.Id != excludeId.Value);
-            }
-            return await query.AnyAsync();
-        }
-
-        public async Task<bool> ExistsByIdentificacionAsync(string identificacion, int? excludeId = null)
-        {
-            var query = _db.Usuarios.Where(u => u.NumeroIdentificacion == identificacion.Trim() && u.Activo);
-            if (excludeId.HasValue)
-            {
-                query = query.Where(u => u.Id != excludeId.Value);
-            }
-            return await query.AnyAsync();
-        }
-
-        public async Task<bool> ValidarDominioYTipoAsync(string email, int tipoUsuarioId)
-        {
-            var domain = email.Split('@').Last().ToLower();
-
-            if (tipoUsuarioId == 1) // Estudiante
-            {
-                return domain == "cuc.cr";
-            }
-            else if (tipoUsuarioId == 2 || tipoUsuarioId == 3) // Funcionario o Administrador
-            {
-                return domain == "cuc.ac.cr";
-            }
-
-            return false;
-        }
-
-        private static string GetTipoUsuarioNombre(int tipoUsuarioId)
+        private string GetTipoUsuarioNombre(int tipoUsuarioId)
         {
             return tipoUsuarioId switch
             {
@@ -420,16 +39,538 @@ namespace UsuariosSRV4.Services
             };
         }
 
-        private static string GetTipoIdentificacionNombre(int tipoIdentificacionId)
+        // ========================================
+        // VALIDAR CREDENCIALES
+        // ========================================
+        public async Task<ValidarCredencialesResponse?> ValidarCredencialesAsync(string email, string password, string tipo)
         {
-            return tipoIdentificacionId switch
+            Console.WriteLine($"=== VALIDANDO CREDENCIALES ===");
+            Console.WriteLine($"Email: {email}");
+            Console.WriteLine($"Tipo: {tipo}");
+            Console.WriteLine($"Password recibida: {password}");
+
+            var usuario = await _db.Usuarios
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+            if (usuario == null)
             {
-                1 => "Cédula",
-                2 => "Pasaporte",
-                3 => "DIMEX",
-                4 => "NITE",
-                _ => "Desconocido"
-            };
+                Console.WriteLine($"❌ Usuario no encontrado: {email}");
+                return null;
+            }
+
+            Console.WriteLine($"✅ Usuario encontrado: {usuario.Email}");
+            Console.WriteLine($"   Hash en DB: {usuario.Contrasena}");
+            Console.WriteLine($"   Tipo en DB: {usuario.TipoUsuarioId}");
+
+            if (!usuario.Activo)
+            {
+                Console.WriteLine($"❌ Usuario inactivo");
+                return new ValidarCredencialesResponse
+                {
+                    Id = usuario.Id,
+                    Email = usuario.Email,
+                    NombreCompleto = usuario.NombreCompleto,
+                    TipoUsuario = GetTipoUsuarioNombre(usuario.TipoUsuarioId),
+                    Activo = usuario.Activo,
+                    Bloqueado = usuario.Bloqueado,
+                    IntentosFallidos = usuario.IntentosFallidos
+                };
+            }
+
+            if (usuario.Bloqueado)
+            {
+                Console.WriteLine($"❌ Usuario bloqueado");
+                return new ValidarCredencialesResponse
+                {
+                    Id = usuario.Id,
+                    Email = usuario.Email,
+                    NombreCompleto = usuario.NombreCompleto,
+                    TipoUsuario = GetTipoUsuarioNombre(usuario.TipoUsuarioId),
+                    Activo = usuario.Activo,
+                    Bloqueado = usuario.Bloqueado,
+                    IntentosFallidos = usuario.IntentosFallidos
+                };
+            }
+
+            var isValidPassword = PasswordHelper.VerifyPassword(password, usuario.Contrasena);
+            Console.WriteLine($"   ¿Contraseña válida? {isValidPassword}");
+
+            if (isValidPassword)
+            {
+                Console.WriteLine($"✅ Contraseña correcta");
+                usuario.IntentosFallidos = 0;
+                await _db.SaveChangesAsync();
+
+                if (!string.IsNullOrEmpty(tipo))
+                {
+                    var tipoUsuarioNombre = GetTipoUsuarioNombre(usuario.TipoUsuarioId);
+                    Console.WriteLine($"   Tipo de usuario convertido: {tipoUsuarioNombre}");
+                    Console.WriteLine($"   Tipo esperado: {tipo}");
+
+                    if (tipoUsuarioNombre != tipo)
+                    {
+                        Console.WriteLine($"❌ Tipo de usuario no coincide");
+                        return new ValidarCredencialesResponse
+                        {
+                            Id = usuario.Id,
+                            Email = usuario.Email,
+                            NombreCompleto = usuario.NombreCompleto,
+                            TipoUsuario = tipoUsuarioNombre,
+                            Activo = usuario.Activo,
+                            Bloqueado = usuario.Bloqueado,
+                            IntentosFallidos = usuario.IntentosFallidos
+                        };
+                    }
+                }
+
+                Console.WriteLine($"✅ Login exitoso para: {usuario.Email}");
+                return new ValidarCredencialesResponse
+                {
+                    Id = usuario.Id,
+                    Email = usuario.Email,
+                    NombreCompleto = usuario.NombreCompleto,
+                    TipoUsuario = GetTipoUsuarioNombre(usuario.TipoUsuarioId),
+                    Activo = usuario.Activo,
+                    Bloqueado = usuario.Bloqueado,
+                    IntentosFallidos = usuario.IntentosFallidos
+                };
+            }
+
+            Console.WriteLine($"❌ Contraseña incorrecta");
+            usuario.IntentosFallidos++;
+            if (usuario.IntentosFallidos >= 5)
+            {
+                usuario.Bloqueado = true;
+                Console.WriteLine($"⚠️ Usuario bloqueado por intentos fallidos");
+            }
+            await _db.SaveChangesAsync();
+
+            return null;
+        }
+
+        // ========================================
+        // OBTENER TODOS LOS USUARIOS
+        // ========================================
+        public async Task<IEnumerable<UsuarioDto>> GetAllAsync()
+        {
+            try
+            {
+                Console.WriteLine("📡 GetAllAsync - Iniciando consulta...");
+
+                var usuarios = await _db.Usuarios
+                    .Include(u => u.Telefonos)
+                    .Where(u => u.Activo)
+                    .ToListAsync();
+
+                Console.WriteLine($"📡 GetAllAsync - Usuarios encontrados: {usuarios.Count}");
+
+                var result = usuarios.Select(u => new UsuarioDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    TipoIdentificacion = u.TipoIdentificacionId.ToString(),
+                    NumeroIdentificacion = u.NumeroIdentificacion,
+                    NombreCompleto = u.NombreCompleto,
+                    TipoUsuario = GetTipoUsuarioNombre(u.TipoUsuarioId),
+                    Activo = u.Activo,
+                    Bloqueado = u.Bloqueado,
+                    IntentosFallidos = u.IntentosFallidos,
+                    FechaCreacion = u.FechaCreacion,
+                    Telefonos = u.Telefonos.Where(t => t.Activo).Select(t => t.Numero).ToList(),
+                    AreasIds = new List<int>(),
+                    Areas = new List<AreaDto>()
+                }).ToList();
+
+                Console.WriteLine($"📡 GetAllAsync - Resultado mapeado: {result.Count} usuarios");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ GetAllAsync - Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        // ========================================
+        // OBTENER USUARIO POR ID
+        // ========================================
+        public async Task<UsuarioDto?> GetByIdAsync(int id)
+        {
+            try
+            {
+                Console.WriteLine($"📡 GetByIdAsync - Buscando usuario ID: {id}");
+
+                var u = await _db.Usuarios
+                    .Include(u => u.Telefonos)
+                    .FirstOrDefaultAsync(u => u.Id == id);
+
+                if (u == null)
+                {
+                    Console.WriteLine($"❌ Usuario no encontrado ID: {id}");
+                    return null;
+                }
+
+                Console.WriteLine($"✅ Usuario encontrado: {u.Email}");
+
+                var allAreas = await _areaApiClient.GetAllAsync();
+
+                return new UsuarioDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    TipoIdentificacion = u.TipoIdentificacionId.ToString(),
+                    NumeroIdentificacion = u.NumeroIdentificacion,
+                    NombreCompleto = u.NombreCompleto,
+                    TipoUsuario = GetTipoUsuarioNombre(u.TipoUsuarioId),
+                    Activo = u.Activo,
+                    Bloqueado = u.Bloqueado,
+                    IntentosFallidos = u.IntentosFallidos,
+                    FechaCreacion = u.FechaCreacion,
+                    Telefonos = u.Telefonos.Where(t => t.Activo).Select(t => t.Numero).ToList(),
+                    AreasIds = new List<int>(),
+                    Areas = allAreas
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ GetByIdAsync - Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        // ========================================
+        // CREAR USUARIO
+        // ========================================
+        public async Task<(bool ok, string? error, UsuarioDto? data)> CreateAsync(CrearUsuarioDto dto)
+        {
+            try
+            {
+                Console.WriteLine($"📝 CreateAsync - Creando usuario");
+                Console.WriteLine($"   Email: {dto.Email}");
+                Console.WriteLine($"   TipoUsuarioId: {dto.TipoUsuarioId}");
+                Console.WriteLine($"   Áreas seleccionadas: {(dto.AreasIds != null ? string.Join(", ", dto.AreasIds) : "Ninguna")}");
+
+                var emailValidation = ValidarEmailPorDominio(dto.Email, dto.TipoUsuarioId);
+                if (!emailValidation.IsValid)
+                {
+                    return (false, emailValidation.Error, null);
+                }
+
+                var existe = await _db.Usuarios.AnyAsync(u => u.Email == dto.Email);
+                if (existe)
+                {
+                    return (false, "El email ya está registrado", null);
+                }
+
+                var hashedPassword = PasswordHelper.HashPassword(dto.Contrasena);
+
+                var entity = new Usuario
+                {
+                    Email = dto.Email,
+                    Contrasena = hashedPassword,
+                    TipoIdentificacionId = dto.TipoIdentificacionId,
+                    NumeroIdentificacion = dto.NumeroIdentificacion,
+                    NombreCompleto = dto.NombreCompleto,
+                    TipoUsuarioId = dto.TipoUsuarioId,
+                    Activo = true,
+                    Bloqueado = false,
+                    IntentosFallidos = 0,
+                    FechaCreacion = DateTime.Now
+                };
+
+                _db.Usuarios.Add(entity);
+                await _db.SaveChangesAsync();
+
+                // Guardar teléfonos
+                if (dto.Telefonos != null && dto.Telefonos.Any())
+                {
+                    foreach (var telefono in dto.Telefonos)
+                    {
+                        _db.Telefonos.Add(new Telefono
+                        {
+                            UsuarioId = entity.Id,
+                            Numero = telefono,
+                            Activo = true
+                        });
+                    }
+                    await _db.SaveChangesAsync();
+                }
+
+                Console.WriteLine($"✅ Usuario creado con ID: {entity.Id}");
+
+                var allAreas = await _areaApiClient.GetAllAsync();
+
+                var data = new UsuarioDto
+                {
+                    Id = entity.Id,
+                    Email = entity.Email,
+                    TipoIdentificacion = entity.TipoIdentificacionId.ToString(),
+                    NumeroIdentificacion = entity.NumeroIdentificacion,
+                    NombreCompleto = entity.NombreCompleto,
+                    TipoUsuario = GetTipoUsuarioNombre(entity.TipoUsuarioId),
+                    Activo = entity.Activo,
+                    Bloqueado = entity.Bloqueado,
+                    IntentosFallidos = entity.IntentosFallidos,
+                    FechaCreacion = entity.FechaCreacion,
+                    Telefonos = dto.Telefonos ?? new List<string>(),
+                    AreasIds = dto.AreasIds ?? new List<int>(),
+                    Areas = allAreas.Where(a => (dto.AreasIds ?? new List<int>()).Contains(a.Id)).ToList()
+                };
+
+                return (true, null, data);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ CreateAsync - Error: {ex.Message}");
+                return (false, $"Error al crear usuario: {ex.Message}", null);
+            }
+        }
+
+        // ========================================
+        // ACTUALIZAR USUARIO
+        // ========================================
+        public async Task<(bool ok, string? error, UsuarioDto? data)> UpdateAsync(int id, ActualizarUsuarioDto dto)
+        {
+            try
+            {
+                Console.WriteLine($"📝 UpdateAsync - Actualizando usuario ID: {id}");
+                Console.WriteLine($"   Email: {dto.Email}");
+                Console.WriteLine($"   TipoUsuarioId: {dto.TipoUsuarioId}");
+                Console.WriteLine($"   Áreas seleccionadas: {(dto.AreasIds != null ? string.Join(", ", dto.AreasIds) : "Ninguna")}");
+
+                var entity = await _db.Usuarios
+                    .Include(u => u.Telefonos)
+                    .FirstOrDefaultAsync(u => u.Id == id);
+
+                if (entity == null)
+                {
+                    return (false, "Usuario no encontrado", null);
+                }
+
+                var emailValidation = ValidarEmailPorDominio(dto.Email, dto.TipoUsuarioId);
+                if (!emailValidation.IsValid)
+                {
+                    return (false, emailValidation.Error, null);
+                }
+
+                var existe = await _db.Usuarios.AnyAsync(u => u.Email == dto.Email && u.Id != id);
+                if (existe)
+                {
+                    return (false, "El email ya está registrado por otro usuario", null);
+                }
+
+                entity.Email = dto.Email;
+                entity.TipoIdentificacionId = dto.TipoIdentificacionId;
+                entity.NumeroIdentificacion = dto.NumeroIdentificacion;
+                entity.NombreCompleto = dto.NombreCompleto;
+                entity.TipoUsuarioId = dto.TipoUsuarioId;
+                entity.Activo = dto.Activo;
+                entity.FechaModificacion = DateTime.Now;
+
+                if (!string.IsNullOrEmpty(dto.Contrasena))
+                {
+                    entity.Contrasena = PasswordHelper.HashPassword(dto.Contrasena);
+                }
+
+                // Actualizar teléfonos
+                var telefonosExistentes = await _db.Telefonos.Where(t => t.UsuarioId == id).ToListAsync();
+                _db.Telefonos.RemoveRange(telefonosExistentes);
+
+                if (dto.Telefonos != null && dto.Telefonos.Any())
+                {
+                    foreach (var telefono in dto.Telefonos)
+                    {
+                        _db.Telefonos.Add(new Telefono
+                        {
+                            UsuarioId = entity.Id,
+                            Numero = telefono,
+                            Activo = true
+                        });
+                    }
+                }
+
+                await _db.SaveChangesAsync();
+
+                Console.WriteLine($"✅ Usuario actualizado ID: {entity.Id}");
+
+                var allAreas = await _areaApiClient.GetAllAsync();
+
+                var data = new UsuarioDto
+                {
+                    Id = entity.Id,
+                    Email = entity.Email,
+                    TipoIdentificacion = entity.TipoIdentificacionId.ToString(),
+                    NumeroIdentificacion = entity.NumeroIdentificacion,
+                    NombreCompleto = entity.NombreCompleto,
+                    TipoUsuario = GetTipoUsuarioNombre(entity.TipoUsuarioId),
+                    Activo = entity.Activo,
+                    Bloqueado = entity.Bloqueado,
+                    IntentosFallidos = entity.IntentosFallidos,
+                    FechaCreacion = entity.FechaCreacion,
+                    Telefonos = dto.Telefonos ?? new List<string>(),
+                    AreasIds = dto.AreasIds ?? new List<int>(),
+                    Areas = allAreas.Where(a => (dto.AreasIds ?? new List<int>()).Contains(a.Id)).ToList()
+                };
+
+                return (true, null, data);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ UpdateAsync - Error: {ex.Message}");
+                return (false, $"Error al actualizar usuario: {ex.Message}", null);
+            }
+        }
+
+        // ========================================
+        // ELIMINAR USUARIO (Soft Delete)
+        // ========================================
+        public async Task<(bool ok, string? error)> DeleteAsync(int id)
+        {
+            try
+            {
+                Console.WriteLine($"🗑️ DeleteAsync - Eliminando usuario ID: {id}");
+
+                var entity = await _db.Usuarios.FindAsync(id);
+                if (entity == null)
+                {
+                    Console.WriteLine($"❌ Usuario no encontrado ID: {id}");
+                    return (false, "Usuario no encontrado");
+                }
+
+                entity.Activo = false;
+                entity.FechaModificacion = DateTime.Now;
+                await _db.SaveChangesAsync();
+
+                Console.WriteLine($"✅ Usuario eliminado (soft delete) ID: {id}");
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ DeleteAsync - Error: {ex.Message}");
+                return (false, $"Error al eliminar usuario: {ex.Message}");
+            }
+        }
+
+        // ========================================
+        // DESBLOQUEAR USUARIO
+        // ========================================
+        public async Task<bool> DesbloquearUsuarioAsync(int id)
+        {
+            try
+            {
+                Console.WriteLine($"🔓 DesbloquearUsuarioAsync - ID: {id}");
+
+                var entity = await _db.Usuarios.FindAsync(id);
+                if (entity == null)
+                {
+                    Console.WriteLine($"❌ Usuario no encontrado ID: {id}");
+                    return false;
+                }
+
+                entity.Bloqueado = false;
+                entity.IntentosFallidos = 0;
+                entity.FechaModificacion = DateTime.Now;
+                await _db.SaveChangesAsync();
+
+                Console.WriteLine($"✅ Usuario desbloqueado ID: {id}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ DesbloquearUsuarioAsync - Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        // ========================================
+        // FILTRAR USUARIOS
+        // ========================================
+        public async Task<IEnumerable<UsuarioDto>> GetByFilterAsync(FiltroUsuarioDto filtro)
+        {
+            try
+            {
+                Console.WriteLine($"📡 GetByFilterAsync - Aplicando filtros");
+                Console.WriteLine($"   Identificacion: {filtro.Identificacion}");
+                Console.WriteLine($"   Nombre: {filtro.Nombre}");
+                Console.WriteLine($"   TipoUsuario: {filtro.TipoUsuario}");
+
+                var query = _db.Usuarios
+                    .Include(u => u.Telefonos)
+                    .AsQueryable();
+
+                if (!string.IsNullOrEmpty(filtro.Identificacion))
+                {
+                    query = query.Where(u => u.NumeroIdentificacion.Contains(filtro.Identificacion));
+                }
+
+                if (!string.IsNullOrEmpty(filtro.Nombre))
+                {
+                    query = query.Where(u => u.NombreCompleto.Contains(filtro.Nombre));
+                }
+
+                if (!string.IsNullOrEmpty(filtro.TipoUsuario))
+                {
+                    var tipoId = filtro.TipoUsuario switch
+                    {
+                        "Estudiante" => 1,
+                        "Funcionario" => 2,
+                        "Administrador" => 3,
+                        _ => 0
+                    };
+                    if (tipoId > 0)
+                    {
+                        query = query.Where(u => u.TipoUsuarioId == tipoId);
+                    }
+                }
+
+                var usuarios = await query.ToListAsync();
+
+                var allAreas = await _areaApiClient.GetAllAsync();
+
+                return usuarios.Select(u => new UsuarioDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    TipoIdentificacion = u.TipoIdentificacionId.ToString(),
+                    NumeroIdentificacion = u.NumeroIdentificacion,
+                    NombreCompleto = u.NombreCompleto,
+                    TipoUsuario = GetTipoUsuarioNombre(u.TipoUsuarioId),
+                    Activo = u.Activo,
+                    Bloqueado = u.Bloqueado,
+                    IntentosFallidos = u.IntentosFallidos,
+                    FechaCreacion = u.FechaCreacion,
+                    Telefonos = u.Telefonos.Where(t => t.Activo).Select(t => t.Numero).ToList(),
+                    AreasIds = new List<int>(),
+                    Areas = allAreas
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ GetByFilterAsync - Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        // ========================================
+        // MÉTODOS PRIVADOS
+        // ========================================
+
+        private (bool IsValid, string? Error) ValidarEmailPorDominio(string email, int tipoUsuarioId)
+        {
+            var emailParts = email.Split('@');
+            var dominio = emailParts.Length > 1 ? emailParts[1].ToLower() : "";
+
+            if (tipoUsuarioId == 1 && dominio != "cuc.cr")
+            {
+                return (false, "Los estudiantes solo pueden usar el dominio @cuc.cr");
+            }
+
+            if ((tipoUsuarioId == 2 || tipoUsuarioId == 3) && dominio != "cuc.ac.cr")
+            {
+                return (false, "Los funcionarios y administradores solo pueden usar el dominio @cuc.ac.cr");
+            }
+
+            return (true, null);
         }
     }
 }

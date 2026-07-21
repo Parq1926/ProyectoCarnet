@@ -1,12 +1,4 @@
-<<<<<<< HEAD
-﻿namespace SRV5_TipoUsuario.Entities;
-
-public class TipoUsuario
-{
-    public int Id { get; set; }
-    public string Nombre { get; set; } = string.Empty;
-=======
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TiposUsuarioSRV5.Entities
@@ -21,7 +13,6 @@ namespace TiposUsuarioSRV5.Entities
         [Required]
         [MaxLength(50)]
         [Column("NOMBRE")]
-        public string Nombre { get; set; }
+        public string Nombre { get; set; } = string.Empty;
     }
->>>>>>> a7a79ac (Actualizacion del Login)
 }

@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace SRV4_Areas.Pages.Areas
+namespace AreasSRV7.Pages.Areas
 {
+    [AllowAnonymous]
     public class IndexModel : PageModel
     {
         public void OnGet()

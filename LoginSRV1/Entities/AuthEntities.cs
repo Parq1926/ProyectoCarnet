@@ -1,50 +1,68 @@
-<<<<<<< HEAD
-﻿// Entities/AuthEntities.cs
-using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LoginSRV1.Entities
 {
+    [Table("USUARIO", Schema = "PameRojas")]
     public class Usuario
     {
+        [Key]
+        [Column("ID")]
         public int Id { get; set; }
+
+        [Column("EMAIL")]
         public string Email { get; set; } = string.Empty;
-        public string Contrasena { get; set; } = string.Empty;
-        public int TipoUsuarioId { get; set; }      
-        public int TipoIdentificacionId { get; set; } 
-        public string NumeroIdentificacion { get; set; } = string.Empty;
+
+        [Column("PASSWORD")]
+        public string Password { get; set; } = string.Empty;
+
+        [Column("NOMBRE_COMPLETO")]
         public string NombreCompleto { get; set; } = string.Empty;
-        public bool Activo { get; set; } = true;
-        public bool Bloqueado { get; set; } = false;
-        public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
-        [JsonIgnore]
-        public ICollection<Sesion>? Sesiones { get; set; }
+        [Column("TIPO_USUARIO_ID")]
+        public int TipoUsuarioId { get; set; }
+
+        [Column("TIPO_IDENTIFICACION_ID")]
+        public int TipoIdentificacionId { get; set; }
+
+        [Column("NUMERO_IDENTIFICACION")]
+        public string NumeroIdentificacion { get; set; } = string.Empty;
+
+        [Column("ACTIVO")]
+        public bool Activo { get; set; } = true;
+
+        [Column("FECHA_CREACION")]
+        public DateTime FechaCreacion { get; set; }
+
+        [Column("FECHA_MODIFICACION")]
+        public DateTime? FechaModificacion { get; set; }
+
+        [ForeignKey("TipoUsuarioId")]
+        public TipoUsuario? TipoUsuario { get; set; }
+
+        [ForeignKey("TipoIdentificacionId")]
+        public TipoIdentificacion? TipoIdentificacion { get; set; }
     }
 
-=======
-﻿namespace LoginSRV1.Entities
-{
->>>>>>> a7a79ac (Actualizacion del Login)
-    public class Sesion
+    [Table("TIPOUSUARIO", Schema = "PameRojas")]
+    public class TipoUsuario
     {
+        [Key]
+        [Column("ID")]
         public int Id { get; set; }
-        public int UsuarioId { get; set; }
-        public string RefreshToken { get; set; } = string.Empty;
-        public DateTime FechaExpiracion { get; set; }
-        public bool Activo { get; set; } = true;
-        public DateTime FechaCreacion { get; set; } = DateTime.Now;
-<<<<<<< HEAD
 
-        [JsonIgnore]
-        public Usuario? Usuario { get; set; }
-=======
->>>>>>> a7a79ac (Actualizacion del Login)
+        [Column("NOMBRE")]
+        public string Nombre { get; set; } = string.Empty;
     }
 
-    public class Parametro
+    [Table("TIPOIDENTIFICACION", Schema = "PameRojas")]
+    public class TipoIdentificacion
     {
-        public string Id { get; set; } = string.Empty;
-        public string Valor { get; set; } = string.Empty;
-        public string? Descripcion { get; set; }
+        [Key]
+        [Column("ID")]
+        public int Id { get; set; }
+
+        [Column("NOMBRE")]
+        public string Nombre { get; set; } = string.Empty;
     }
 }

@@ -1,5 +1,4 @@
 ﻿@page
-@model TiposUsuarioSRV5.Pages.TiposUsuario.IndexModel
 @{
     ViewData["Title"] = "Administracion de Tipos de Usuario";
     Layout = "~/Pages/Shared/_Layout.cshtml";
@@ -59,7 +58,7 @@
 <!-- MODAL CREAR / EDITAR -->
 <!-- ======================================== -->
 <div class="modal" id="modalFormulario">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="max-width:500px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="tituloModal">Nuevo Tipo de Usuario</h5>
@@ -67,10 +66,9 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="idTipoUsuario" value="0">
-
                 <div class="form-group">
                     <label>Nombre *</label>
-                    <input id="nombre" class="form-control" placeholder="Nombre del tipo de usuario">
+                    <input id="nombre" class="form-control" placeholder="Ej: Estudiante, Funcionario, Administrador">
                     <div class="invalid-feedback" id="errNombre"></div>
                 </div>
             </div>
@@ -95,7 +93,7 @@
                 <button class="btn-close" onclick="cerrarModalEliminar()">&times;</button>
             </div>
             <div class="modal-body">
-                <p>Esta seguro de eliminar el tipo de usuario <strong id="nombreEliminar"></strong>?</p>
+                <p>¿Esta seguro de eliminar el tipo de usuario <strong id="nombreEliminar"></strong>?</p>
                 <p style="color: #6c757d; font-size: 14px;">Esta accion no se puede deshacer.</p>
             </div>
             <div class="modal-footer">
@@ -109,45 +107,37 @@
 </div>
 
 <script>
-    const API_URL = window.location.origin + '/api/TipoUsuario';
-    let idEliminar = 0;
-
     // ========================================
-    // TOKEN - RECIBIR DE LA URL O LOCALSTORAGE
+    // 🔐 VERIFICAR TOKEN EN LOCALSTORAGE
+    // ========================================
+        // ========================================
+    // 🔐 VERIFICAR TOKEN EN LOCALSTORAGE
     // ========================================
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Intentar obtener token de la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        let tokenFromUrl = urlParams.get('token');
-
-        // 2. Si hay token en la URL, guardarlo en localStorage
-        if (tokenFromUrl) {
-            localStorage.setItem('accessToken', tokenFromUrl);
-            // Limpiar la URL para no mostrar el token
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, document.title, newUrl);
-            console.log('✅ Token recibido desde la URL');
-        }
-
-        // 3. Verificar si hay token en localStorage
         const storedToken = localStorage.getItem('accessToken');
+        console.log('=== TIPOS USUARIO SRV5 ===');
+        console.log('Token en localStorage:', storedToken ? 'SÍ existe' : 'NO existe');
+
         if (!storedToken) {
             console.log('❌ No hay token, redirigiendo a Login');
-            mostrarAlerta('No hay sesión activa. Redirigiendo...', 'warning');
-            setTimeout(function() {
-                window.location.href = 'https://localhost:7019/Login';
-            }, 2000);
+            localStorage.setItem('redirectMessage', 'Por favor inicie sesión para utilizar el sistema');
+            // ✅ USAR URL RELATIVA
+            window.location.href = '/Login';
             return;
         }
 
-        console.log('✅ Token encontrado en localStorage');
-
-        // 4. Cargar los datos
+        console.log('✅ Token válido, cargando tipos de usuario...');
         cargarTiposUsuario();
     });
 
     // ========================================
-    // FUNCIONES PARA OBTENER TOKEN
+    // CONFIGURACIÓN
+    // ========================================
+    const API_URL = '/api/TipoUsuario';
+    let idEliminar = 0;
+
+    // ========================================
+    // 🔐 FUNCIONES PARA OBTENER TOKEN
     // ========================================
 
     function getToken() {
@@ -167,6 +157,48 @@
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json'
         };
+    }
+
+    // ========================================
+    // 🔐 FUNCIÓN PARA VERIFICAR Y REDIRIGIR SI 401
+    // ========================================
+
+        // ========================================
+    // 🔐 FUNCIÓN PARA VERIFICAR Y REDIRIGIR SI 401
+    // ========================================
+
+    function handleUnauthorized(response) {
+        if (response.status === 401) {
+            console.log('❌ Token inválido o expirado, redirigiendo a Login');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('nombreCompleto');
+            localStorage.removeItem('usuarioTipo');
+            localStorage.removeItem('usuarioId');
+            localStorage.setItem('redirectMessage', 'Su sesión ha expirado. Por favor inicie sesión nuevamente.');
+            // ✅ USAR URL RELATIVA
+            window.location.href = '/Login';
+            return true;
+        }
+        return false;
+    }
+    // ========================================
+    // ALERTAS Y LOADING
+    // ========================================
+
+    function mostrarAlerta(mensaje, tipo) {
+        const div = document.getElementById('alertas');
+        div.innerHTML = `
+            <div class="alert alert-${tipo} alert-dismissible">
+                ${mensaje}
+                <button onclick="this.parentElement.remove()" style="float:right; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+            </div>
+        `;
+        setTimeout(() => { div.innerHTML = ''; }, 4000);
+    }
+
+    function mostrarLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
     }
 
     // ========================================
@@ -208,91 +240,6 @@
     }
 
     // ========================================
-    // ALERTAS Y LOADING
-    // ========================================
-
-    function mostrarAlerta(mensaje, tipo) {
-        const div = document.getElementById('alertas');
-        div.innerHTML = `
-            <div class="alert alert-${tipo} alert-dismissible">
-                ${mensaje}
-                <button onclick="this.parentElement.remove()" style="float:right; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
-            </div>
-        `;
-        setTimeout(() => { div.innerHTML = ''; }, 4000);
-    }
-
-    function mostrarLoading(show) {
-        document.getElementById('loading').style.display = show ? 'block' : 'none';
-    }
-
-    // ========================================
-    // BUSCAR POR ID
-    // ========================================
-
-    async function buscarTipoUsuarioPorId() {
-        const id = document.getElementById('buscarId').value.trim();
-
-        if (!id || parseInt(id) <= 0) {
-            mostrarAlerta('Ingrese un ID valido mayor a 0', 'warning');
-            return;
-        }
-
-        const resultadoDiv = document.getElementById('buscarResultado');
-        resultadoDiv.style.display = 'block';
-        resultadoDiv.innerHTML = '<div class="loading"><div class="spinner-border"></div><p>Buscando...</p></div>';
-
-        try {
-            const headers = getHeaders();
-            if (!headers) {
-                resultadoDiv.innerHTML = `<div class="alert alert-danger">No hay sesion activa</div>`;
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/${id}`, { headers });
-
-            if (response.status === 401) {
-                window.location.href = 'https://localhost:7019/Login';
-                return;
-            }
-
-            if (response.status === 404) {
-                resultadoDiv.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> No se encontro ningun tipo de usuario con ID ${id}
-                    </div>
-                `;
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error('Error al buscar');
-            }
-
-            const data = await response.json();
-
-            resultadoDiv.innerHTML = `
-                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #dee2e6;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:14px;">
-                        <div><strong>ID:</strong> ${data.id}</div>
-                        <div><strong>Nombre:</strong> ${data.nombre}</div>
-                    </div>
-                    <div style="margin-top:10px; display:flex; gap:8px;">
-                        <button class="btn btn-warning btn-sm" onclick="editarTipoUsuario(${data.id})">Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="abrirModalEliminar(${data.id}, '${data.nombre}')">Eliminar</button>
-                        <button class="btn btn-secondary btn-sm" onclick="cerrarModalBuscar()">Cerrar</button>
-                    </div>
-                </div>
-            `;
-
-        } catch (error) {
-            resultadoDiv.innerHTML = `
-                <div class="alert alert-danger">Error al buscar: ${error.message}</div>
-            `;
-        }
-    }
-
-    // ========================================
     // VALIDACIONES
     // ========================================
 
@@ -326,93 +273,142 @@
     }
 
     function obtenerDatosFormulario() {
-        const data = {
+        return {
             nombre: document.getElementById('nombre').value.trim()
         };
+    }
 
-        const id = document.getElementById('idTipoUsuario').value;
-        if (id !== '0') {
-            data.id = parseInt(id);
+    // ========================================
+    // BUSCAR POR ID
+    // ========================================
+
+    async function buscarTipoUsuarioPorId() {
+        const id = document.getElementById('buscarId').value.trim();
+        if (!id || parseInt(id) <= 0) {
+            mostrarAlerta('Ingrese un ID valido mayor a 0', 'warning');
+            return;
         }
 
-        return data;
+        const headers = getHeaders();
+        if (!headers) return;
+
+        const resultadoDiv = document.getElementById('buscarResultado');
+        resultadoDiv.style.display = 'block';
+        resultadoDiv.innerHTML = '<div class="loading"><div class="spinner-border"></div><p>Buscando...</p></div>';
+
+        try {
+            const response = await fetch(`${API_URL}/${id}`, { headers });
+
+            if (handleUnauthorized(response)) return;
+
+            if (response.status === 404) {
+                resultadoDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No se encontro ningun tipo de usuario con ID ${id}
+                    </div>
+                `;
+                return;
+            }
+
+            if (!response.ok) throw new Error('Error al buscar');
+            const data = await response.json();
+
+            resultadoDiv.innerHTML = `
+                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #dee2e6;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:14px;">
+                        <div><strong>ID:</strong> ${data.id}</div>
+                        <div><strong>Nombre:</strong> ${data.nombre}</div>
+                        <div><strong>Estado:</strong> <span class="${data.activo ? 'badge-success' : 'badge-danger'}">${data.activo ? 'Activo' : 'Inactivo'}</span></div>
+                        <div><strong>Fecha Creacion:</strong> ${new Date(data.fechaCreacion).toLocaleDateString()}</div>
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:8px;">
+                        <button class="btn btn-warning btn-sm" onclick="editarTipoUsuario(${data.id})">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="abrirModalEliminar(${data.id}, '${data.nombre}')">Eliminar</button>
+                        <button class="btn btn-secondary btn-sm" onclick="cerrarModalBuscar()">Cerrar</button>
+                    </div>
+                </div>
+            `;
+
+        } catch (error) {
+            resultadoDiv.innerHTML = `<div class="alert alert-danger">Error al buscar: ${error.message}</div>`;
+        }
     }
 
     // ========================================
     // CRUD - LISTAR TODOS
     // ========================================
 
-    async function cargarTiposUsuario() {
+    function renderizarTiposUsuario(tipos) {
         const container = document.getElementById('listaTiposUsuario');
-        mostrarLoading(true);
 
-        try {
-            const headers = getHeaders();
-            if (!headers) {
-                mostrarLoading(false);
-                return;
-            }
-
-            const response = await fetch(API_URL, { headers });
-
-            if (response.status === 401) {
-                window.location.href = 'https://localhost:7019/Login';
-                return;
-            }
-
-            if (!response.ok) throw new Error('Error al cargar');
-            const tipos = await response.json();
-
-            if (!tipos || tipos.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-user-tag fa-4x"></i>
-                        <p>No hay tipos de usuario registrados</p>
-                        <button class="btn btn-primary" onclick="abrirModalCrear()">
-                            <i class="fas fa-plus"></i> Crear primer tipo
-                        </button>
-                    </div>
-                `;
-                mostrarLoading(false);
-                return;
-            }
-
-            let html = '';
-            tipos.forEach(function(t) {
-                html += `
-                    <div class="tipousuario-card">
-                        <div class="tipousuario-card-header">
-                            <h3>${t.nombre}</h3>
-                            <span class="badge-success">Activo</span>
-                        </div>
-                        <div class="tipousuario-card-body">
-                            <div class="info-row">
-                                <span class="label"><i class="fas fa-id-badge"></i> ID:</span>
-                                <span class="value">${t.id}</span>
-                            </div>
-                        </div>
-                        <div class="tipousuario-card-footer">
-                            <button class="btn-sm btn-info" onclick="editarTipoUsuario(${t.id})">
-                                <i class="fas fa-edit"></i> Editar
-                            </button>
-                            <button class="btn-sm btn-danger" onclick="abrirModalEliminar(${t.id}, '${t.nombre}')">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        } catch (error) {
+        if (!tipos || tipos.length === 0) {
             container.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i> Error al cargar tipos de usuario
+                <div class="empty-state">
+                    <i class="fas fa-user-tag fa-4x"></i>
+                    <p>No hay tipos de usuario registrados</p>
+                    <button class="btn btn-primary" onclick="abrirModalCrear()">
+                        <i class="fas fa-plus"></i> Crear primer tipo
+                    </button>
                 </div>
             `;
+            return;
         }
 
-        mostrarLoading(false);
+        let html = '';
+        tipos.forEach(function(t) {
+            html += `
+                <div class="tipousuario-card">
+                    <div class="tipousuario-card-header">
+                        <h3>${t.nombre}</h3>
+                        <span class="${t.activo ? 'badge-success' : 'badge-danger'}">${t.activo ? 'Activo' : 'Inactivo'}</span>
+                    </div>
+                    <div class="tipousuario-card-body">
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-id-badge"></i> ID:</span>
+                            <span class="value">${t.id}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-calendar"></i> Fecha Creacion:</span>
+                            <span class="value">${new Date(t.fechaCreacion).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <div class="tipousuario-card-footer">
+                        <button class="btn-sm btn-info" onclick="editarTipoUsuario(${t.id})">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn-sm btn-danger" onclick="abrirModalEliminar(${t.id}, '${t.nombre}')">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    async function cargarTiposUsuario() {
+        const headers = getHeaders();
+        if (!headers) return;
+
+        try {
+            mostrarLoading(true);
+            const response = await fetch(API_URL, { headers });
+
+            if (handleUnauthorized(response)) return;
+
+            if (!response.ok) throw new Error('Error al cargar');
+            const data = await response.json();
+            renderizarTiposUsuario(data);
+        } catch (error) {
+            document.getElementById('listaTiposUsuario').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Error al cargar tipos de usuario: ${error.message}
+                </div>
+            `;
+        } finally {
+            mostrarLoading(false);
+        }
     }
 
     // ========================================
@@ -431,6 +427,10 @@
         const url = isEdit ? `${API_URL}/${id}` : API_URL;
         const method = isEdit ? 'PUT' : 'POST';
 
+        if (isEdit) {
+            data.id = parseInt(id);
+        }
+
         try {
             const response = await fetch(url, {
                 method: method,
@@ -438,10 +438,7 @@
                 body: JSON.stringify(data)
             });
 
-            if (response.status === 401) {
-                window.location.href = 'https://localhost:7019/Login';
-                return;
-            }
+            if (handleUnauthorized(response)) return;
 
             if (response.ok) {
                 mostrarAlerta(isEdit ? 'Tipo de usuario actualizado' : 'Tipo de usuario creado', 'success');
@@ -458,20 +455,17 @@
     }
 
     // ========================================
-    // CRUD - EDITAR (OBTENER POR ID + LLENAR MODAL)
+    // CRUD - EDITAR (OBTENER POR ID)
     // ========================================
 
     async function editarTipoUsuario(id) {
-        try {
-            const headers = getHeaders();
-            if (!headers) return;
+        const headers = getHeaders();
+        if (!headers) return;
 
+        try {
             const response = await fetch(`${API_URL}/${id}`, { headers });
 
-            if (response.status === 401) {
-                window.location.href = 'https://localhost:7019/Login';
-                return;
-            }
+            if (handleUnauthorized(response)) return;
 
             if (!response.ok) throw new Error('Error al obtener datos');
             const data = await response.json();
@@ -500,14 +494,11 @@
                 headers: headers
             });
 
-            if (response.status === 401) {
-                window.location.href = 'https://localhost:7019/Login';
-                return;
-            }
+            if (handleUnauthorized(response)) return;
 
             if (response.ok) {
                 cerrarModalEliminar();
-                mostrarAlerta('Tipo de usuario eliminado', 'success');
+                mostrarAlerta('Tipo de usuario eliminado correctamente', 'success');
                 cargarTiposUsuario();
                 cerrarModalBuscar();
             } else {
@@ -519,3 +510,325 @@
         }
     }
 </script>
+
+<style>
+    .tipousuario-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .tipousuario-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+        .tipousuario-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+    .tipousuario-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+
+        .tipousuario-card-header h3 {
+            color: #003366;
+            font-size: 18px;
+            margin: 0;
+        }
+
+    .info-row {
+        display: flex;
+        padding: 4px 0;
+        font-size: 14px;
+    }
+
+        .info-row .label {
+            color: #6c757d;
+            min-width: 90px;
+        }
+
+        .info-row .value {
+            color: #333;
+        }
+
+    .tipousuario-card-footer {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .badge-success {
+        background: #d4edda;
+        color: #155724;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .badge-danger {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .btn-sm {
+        padding: 4px 12px;
+        font-size: 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+
+        .btn-info:hover {
+            background: #117a8b;
+        }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background: #bd2130;
+        }
+
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+    .btn-primary {
+        background: #003366;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background: #001a33;
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+        .form-control:focus {
+            border-color: #003366;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+        }
+
+    .is-invalid {
+        border-color: #dc3545;
+    }
+
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 4px;
+        display: block;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-dialog {
+        max-width: 500px;
+        margin: auto;
+        width: 90%;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        background: #003366;
+        color: white;
+        border-radius: 12px 12px 0 0;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .modal-header .btn-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        background: #f8f9fa;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+    }
+
+        .empty-state i {
+            color: #dee2e6;
+            margin-bottom: 16px;
+        }
+
+        .empty-state p {
+            font-size: 18px;
+            color: #6c757d;
+        }
+
+    .loading {
+        text-align: center;
+        padding: 40px 0;
+    }
+
+    .spinner-border {
+        display: inline-block;
+        width: 3rem;
+        height: 3rem;
+        border: 0.25em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border 0.75s linear infinite;
+        color: #003366;
+    }
+
+    @@keyframes spinner-border {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+        .page-header h2 {
+            color: #003366;
+            margin: 0;
+            font-size: 24px;
+        }
+
+    .alert {
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .alert-dismissible {
+        position: relative;
+    }
+
+        .alert-dismissible button {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+</style>

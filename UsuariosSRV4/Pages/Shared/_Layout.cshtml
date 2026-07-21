@@ -1,5 +1,4 @@
-﻿<!-- UsuariosSRV4/Pages/Shared/_Layout.cshtml -->
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -10,7 +9,6 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-sidebar">
@@ -42,9 +40,7 @@
             </nav>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Top Bar -->
             <header class="top-bar">
                 <div class="top-bar-left">
                     <button class="menu-toggle" onclick="toggleSidebar()">
@@ -57,13 +53,12 @@
                         <div class="user-avatar">
                             <i class="fas fa-user-circle"></i>
                         </div>
-                        <span class="user-name" id="userName">Administrador</span>
+                        <span class="user-name">Administrador</span>
                         <span class="user-role">(Usuarios)</span>
                     </div>
                 </div>
             </header>
 
-            <!-- Page Content -->
             <div class="page-content">
                 @RenderBody()
             </div>
@@ -73,12 +68,6 @@
     <script>
             function toggleSidebar() {
                 document.getElementById('sidebar').classList.toggle('open');
-            }
-
-            // Cerrar sesión
-            function logout() {
-                localStorage.clear();
-                window.location.href = 'https://localhost:7019/Login';
             }
     </script>
     @await RenderSectionAsync("Scripts", required: false)

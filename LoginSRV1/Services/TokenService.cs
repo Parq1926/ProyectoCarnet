@@ -1,26 +1,11 @@
-<<<<<<< HEAD
-﻿// Services/TokenService.cs
-using LoginSRV1.Entities;
-=======
-﻿using LoginSRV1.DTOs;
->>>>>>> a7a79ac (Actualizacion del Login)
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
+using LoginSRV1.Entities;
+using Microsoft.IdentityModel.Tokens;
 
 namespace LoginSRV1.Services
 {
-<<<<<<< HEAD
-=======
-    public interface ITokenService
-    {
-        string GenerateJwtToken(UsuarioDto user);
-        string GenerateRefreshToken();
-    }
-
->>>>>>> a7a79ac (Actualizacion del Login)
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _configuration;
@@ -30,55 +15,59 @@ namespace LoginSRV1.Services
             _configuration = configuration;
         }
 
-<<<<<<< HEAD
-        public string GenerateJwtToken(Usuario user)
+        public string GenerateToken(Usuario usuario)
         {
             var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"] ?? "MiClavePredeterminada1234567890!!");
+            var issuer = _configuration["JwtSettings:Issuer"] ?? "CUC";
+            var audience = _configuration["JwtSettings:Audience"] ?? "CUCAapp";
 
-            // ✅ CORREGIDO - Mapeo correcto según tu base de datos
-            string roleName = user.TipoUsuarioId switch
-            {
-                1 => "Administrador",  // ← CORREGIDO
-                2 => "Funcionario",    // ← CORREGIDO
-                3 => "Estudiante",     // ← CORREGIDO
-                _ => "Usuario"
-            };
-
-=======
-        public string GenerateJwtToken(UsuarioDto user)
-        {
-            var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"] ?? "MiClavePredeterminada1234567890!!");
-
->>>>>>> a7a79ac (Actualizacion del Login)
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.NombreCompleto),
-                new Claim(ClaimTypes.Email, user.Email),
-<<<<<<< HEAD
-                new Claim(ClaimTypes.Role, roleName)
-=======
-                new Claim(ClaimTypes.Role, user.TipoUsuario)
->>>>>>> a7a79ac (Actualizacion del Login)
+                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                new Claim(ClaimTypes.Name, usuario.NombreCompleto),
+                new Claim(ClaimTypes.Email, usuario.Email),
+                new Claim(ClaimTypes.Role, usuario.TipoUsuario?.Nombre ?? "Usuario")
             };
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["JwtSettings:Issuer"],
-                audience: _configuration["JwtSettings:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(5),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
-            );
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(8),
+                Issuer = issuer,
+                Audience = audience,
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
 
-        public string GenerateRefreshToken()
+        public bool ValidateToken(string token)
         {
-            var randomNumber = new byte[32];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"] ?? "MiClavePredeterminada1234567890!!");
+
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration["JwtSettings:Issuer"] ?? "CUC",
+                    ValidateAudience = true,
+                    ValidAudience = _configuration["JwtSettings:Audience"] ?? "CUCAapp",
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                }, out _);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

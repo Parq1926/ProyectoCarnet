@@ -1,23 +1,17 @@
-﻿<!-- Pages/Shared/_Layout.cshtml -->
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"] - Carnet Digital CUC</title>
     <link rel="stylesheet" href="~/css/site.css">
-<<<<<<< HEAD
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-=======
-    <!-- ✅ FONT AWESOME 6.5.1 CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
->>>>>>> a7a79ac (Actualizacion del Login)
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar (Menú lateral) -->
+        <!-- ======================================== -->
+        <!-- SIDEBAR - MENÚ LATERAL                   -->
+        <!-- ======================================== -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-sidebar">
@@ -27,140 +21,49 @@
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <!-- Web2 - Inicio -->
                     <li class="active" id="menu-welcome">
                         <a href="/Welcome">
                             <i class="fas fa-home"></i>
                             <span>Inicio</span>
                         </a>
                     </li>
-
-                    <!-- Web4 - Administración de Usuarios -->
                     <li id="menu-usuarios">
-<<<<<<< HEAD
-                        <a href="#">
-=======
                         <a href="#" onclick="abrirUsuarios(); return false;">
->>>>>>> a7a79ac (Actualizacion del Login)
                             <i class="fas fa-users"></i>
                             <span>Usuarios</span>
                         </a>
                     </li>
-<<<<<<< HEAD
-=======
-
->>>>>>> a7a79ac (Actualizacion del Login)
-                    <!-- Web5 - Administración de Carreras -->
-                    <li id="menu-carreras">
-                        <a href="http://localhost:7003/Carrera/Index">
-                            <i class="fas fa-graduation-cap"></i>
-                            <span>Carreras</span>
-                        </a>
-                    </li>
-<<<<<<< HEAD
-                    <!-- Web6 - Administración de Tipos de Usuario -->
-                    <li id="menu-tipos-usuario">
-                        <a href="#">
-=======
-
-                    <!-- ✅ Web6 - Tipos de Usuario (SOLO UNA VEZ) -->
                     <li id="menu-tipos-usuario">
                         <a href="#" onclick="abrirTiposUsuario(); return false;">
->>>>>>> a7a79ac (Actualizacion del Login)
                             <i class="fas fa-user-tag"></i>
                             <span>Tipos de Usuario</span>
                         </a>
                     </li>
-
-<<<<<<< HEAD
-                    <!-- Web7 - Administración de Tipos de Identificación -->
-                    <li id="menu-tipos-identificacion">
-                        <a href="#">
-=======
-                    <!-- ✅ Web7 - Tipos de Identificación (SOLO UNA VEZ) -->
                     <li id="menu-tipos-identificacion">
                         <a href="#" onclick="abrirTiposIdentificacion(); return false;">
->>>>>>> a7a79ac (Actualizacion del Login)
                             <i class="fas fa-id-card"></i>
                             <span>Tipos de Identificación</span>
                         </a>
                     </li>
-
-                    <!-- Web8 - Administración de Fotografía -->
-                    <li id="menu-fotos">
-                        <a href="#">
-                            <i class="fas fa-camera"></i>
-                            <span>Fotografías</span>
+                    <li id="menu-carreras">
+                        <a href="#" onclick="abrirCarreras(); return false;">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>Carreras</span>
                         </a>
                     </li>
-
-                    <!-- Web9 - Generación de QR -->
-                    <li id="menu-qr">
-                        <a href="#">
-                            <i class="fas fa-qrcode"></i>
-                            <span>Generar QR</span>
-                        </a>
-                    </li>
-
-                    <!-- Web10 - Administracion de Areas -->
                     <li id="menu-areas">
-                        <a href="http://localhost:5202/Areas/Index">
+                        <a href="#" onclick="abrirAreas(); return false;">
                             <i class="fas fa-building"></i>
-                            <span>Areas</span>
+                            <span>Áreas</span>
                         </a>
                     </li>
-
-                    <!-- Web11 - Cambiar Estado de Usuario -->
-                    <li id="menu-estado">
-                        <a href="#">
-                            <i class="fas fa-toggle-on"></i>
-                            <span>Estado de Usuario</span>
-                        </a>
-                    </li>
-
-                    <!-- Web12 - Administracion de Instituciones -->
                     <li id="menu-instituciones">
-                        <a href="http://localhost:7002/Instituciones/Index">
+                        <a href="#" onclick="abrirInstituciones(); return false;">
                             <i class="fas fa-university"></i>
                             <span>Instituciones</span>
                         </a>
                     </li>
-
-                    <!-- Web13 - Administración de Módulos (Admin) -->
-                    <li id="menu-modulos">
-                        <a href="#">
-                            <i class="fas fa-cubes"></i>
-                            <span>Módulos</span>
-                        </a>
-                    </li>
-
-                    <!-- Web14 - Administración de Roles (Admin) -->
-                    <li id="menu-roles">
-                        <a href="http://localhost:5191/Roles/Index">
-                            <i class="fas fa-lock"></i>
-                            <span>Roles</span>
-                        </a>
-                    </li>
-
-                    <!-- Web15 - Bitácoras -->
-                    <li id="menu-bitacoras">
-                        <a href="http://localhost:5209/Bitacora/Index">
-                            <i class="fas fa-clipboard-list"></i>
-                            <span>Bitácoras</span>
-                        </a>
-                    </li>
-
-                    <!-- Web17 - Parámetros -->
-                    <li id="menu-parametros">
-                        <a href="#">
-                            <i class="fas fa-sliders-h"></i>
-                            <span>Parámetros</span>
-                        </a>
-                    </li>
-
                     <li class="divider"></li>
-
-                    <!-- Cerrar Sesión -->
                     <li>
                         <a href="#" onclick="logout()" class="logout-link">
                             <i class="fas fa-sign-out-alt"></i>
@@ -171,28 +74,25 @@
             </nav>
         </aside>
 
-        <!-- Contenido principal -->
         <main class="main-content">
-            <!-- Top bar -->
             <header class="top-bar">
                 <div class="top-bar-left">
-                    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+                    <button class="menu-toggle" onclick="toggleSidebar()">
                         <i class="fas fa-bars"></i>
                     </button>
                     <span class="page-title">@ViewData["Title"]</span>
                 </div>
                 <div class="top-bar-right">
                     <div class="user-info">
-                        <div class="user-avatar" id="userAvatar">
+                        <div class="user-avatar">
                             <i class="fas fa-user-circle"></i>
                         </div>
                         <span class="user-name" id="userName">Usuario</span>
-                        <span class="user-role" id="userRole">(Administrador)</span>
+                        <span class="user-role" id="userRole"></span>
                     </div>
                 </div>
             </header>
 
-            <!-- Contenido de la página -->
             <div class="page-content">
                 @RenderBody()
             </div>
@@ -200,111 +100,199 @@
     </div>
 
     <script>
-            // ✅ Validación de autenticación
-            document.addEventListener('DOMContentLoaded', function() {
-                const token = localStorage.getItem('accessToken');
-                const currentPath = window.location.pathname;
-                const isLoginPage = currentPath.includes('/Login');
+        // ========================================
+        // 🔐 VALIDACIÓN DE TOKEN Y AUTENTICACIÓN
+        // ========================================
 
-                if (!token && !isLoginPage) {
-                    localStorage.setItem('redirectMessage', 'Por favor inicie sesión para utilizar el sistema');
-                    window.location.href = '/Login';
-                    return;
-                }
+        // ✅ Verificar autenticación al cargar cualquier página
+        // ========================================
+// 🔐 VERIFICACIÓN GLOBAL DE AUTENTICACIÓN
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('accessToken');
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath.includes('/Login');
 
-<<<<<<< HEAD
-                if (token && isLoginPage) {
-                    window.location.href = '/Welcome';
-                    return;
-                }
+    console.log('=== LAYOUT LOGIN SRV1 ===');
+    console.log('Token:', token ? 'SÍ existe' : 'NO existe');
+    console.log('Path:', currentPath);
 
-=======
->>>>>>> a7a79ac (Actualizacion del Login)
-                if (token) {
-                    const nombre = localStorage.getItem('nombreCompleto') || 'Usuario';
-                    const tipo = localStorage.getItem('usuarioTipo') || '';
-                    document.getElementById('userName').textContent = nombre;
-                    document.getElementById('userRole').textContent = tipo ? `(${tipo})` : '';
-                }
+    // ✅ Si no hay token y no estamos en Login, redirigir
+    if (!token && !isLoginPage) {
+        console.log('❌ No hay token, redirigiendo a Login');
+        localStorage.setItem('redirectMessage', 'Por favor inicie sesión para utilizar el sistema');
+        window.location.href = '/Login';
+        return;
+    }
 
-<<<<<<< HEAD
-                // ✅ Marcar el ítem del menú activo según la página actual
-                const menuItems = document.querySelectorAll('.sidebar-nav ul li');
-                menuItems.forEach(item => {
-                    const link = item.querySelector('a');
-                    if (link && link.getAttribute('href') === currentPath) {
-                        item.classList.add('active');
-                    } else if (currentPath === '/' && link && link.getAttribute('href') === '/Welcome') {
-                        item.classList.add('active');
-=======
-                // Marcar el ítem del menú activo según la página actual
-                const menuItems = document.querySelectorAll('.sidebar-nav ul li');
-                menuItems.forEach(item => {
-                    const link = item.querySelector('a');
-                    if (link) {
-                        const href = link.getAttribute('href');
-                        if (href === currentPath || (currentPath === '/' && href === '/Welcome')) {
-                            item.classList.add('active');
-                        } else {
-                            item.classList.remove('active');
-                        }
->>>>>>> a7a79ac (Actualizacion del Login)
-                    }
-                });
-            });
+    // ✅ Si hay token, mostrar datos del usuario
+    if (token) {
+        const nombre = localStorage.getItem('nombreCompleto') || 'Usuario';
+        const tipo = localStorage.getItem('usuarioTipo') || '';
+        document.getElementById('userName').textContent = nombre;
+        document.getElementById('userRole').textContent = tipo ? `(${tipo})` : '';
+        console.log('✅ Usuario autenticado:', nombre);
+    }
 
-<<<<<<< HEAD
-            // Toggle del sidebar en móviles
-=======
->>>>>>> a7a79ac (Actualizacion del Login)
-            function toggleSidebar() {
-                document.getElementById('sidebar').classList.toggle('open');
+    // Marcar menú activo
+    const menuItems = document.querySelectorAll('.sidebar-nav ul li');
+    menuItems.forEach(item => {
+        const link = item.querySelector('a');
+        if (link) {
+            const href = link.getAttribute('href');
+            if (href === currentPath || (currentPath === '/' && href === '/Welcome')) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
             }
+        }
+    });
+});
 
-<<<<<<< HEAD
-            // Cerrar sesión
-=======
->>>>>>> a7a79ac (Actualizacion del Login)
-            function logout() {
-                localStorage.clear();
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function logout() {
+            localStorage.clear();
+            console.log('✅ Sesión cerrada');
+            window.location.href = '/Login';
+        }
+
+        // ========================================
+        // 🔐 FUNCIONES PARA ABRIR MICROSERVICIOS
+        // ========================================
+
+        function abrirUsuarios() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
                 window.location.href = '/Login';
+                return;
             }
+            // ✅ Sin token en URL - se usa localStorage en el microservicio
+            window.open('https://localhost:7206/Usuarios', '_blank');
+        }
 
-<<<<<<< HEAD
-=======
-            function abrirUsuarios() {
-                const token = localStorage.getItem('accessToken');
-                if (!token) {
-                    alert('Debe iniciar sesión primero');
-                    window.location.href = '/Login';
-                    return;
-                }
-                const url = 'https://localhost:7206/Usuarios?token=' + encodeURIComponent(token);
-                window.open(url, '_blank');
+        function abrirTiposUsuario() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
             }
+            window.open('https://localhost:7020/TiposUsuario', '_blank');
+        }
 
-            function abrirTiposUsuario() {
-                const token = localStorage.getItem('accessToken');
-                if (!token) {
-                    alert('Debe iniciar sesión primero');
-                    window.location.href = '/Login';
-                    return;
-                }
-                const url = 'https://localhost:7020/TiposUsuario?token=' + encodeURIComponent(token);
-                window.open(url, '_blank');
+        function abrirTiposIdentificacion() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
             }
+            window.open('https://localhost:7021/TiposIdentificacion', '_blank');
+        }
 
-            function abrirTiposIdentificacion() {
-                const token = localStorage.getItem('accessToken');
-                if (!token) {
-                    alert('Debe iniciar sesión primero');
-                    window.location.href = '/Login';
-                    return;
-                }
-                const url = 'https://localhost:7021/TiposIdentificacion?token=' + encodeURIComponent(token);
-                window.open(url, '_blank');
+        function abrirCarreras() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
             }
->>>>>>> a7a79ac (Actualizacion del Login)
+            window.open('http://localhost:5280/Carreras', '_blank');
+        }
+
+        function abrirAreas() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('http://localhost:5202/Areas', '_blank');
+        }
+
+        function abrirInstituciones() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('http://localhost:7002/Instituciones', '_blank');
+        }
+
+        function abrirFotografias() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('https://localhost:7025/Fotografias', '_blank');
+        }
+
+        function abrirEstadoUsuario() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('https://localhost:7026/EstadoUsuario', '_blank');
+        }
+
+        function abrirGenerarQR() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('https://localhost:7027/GenerarQR', '_blank');
+        }
+
+        function abrirModulos() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('https://localhost:7028/Modulos', '_blank');
+        }
+
+        function abrirRoles() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('https://localhost:7029/Roles', '_blank');
+        }
+
+        function abrirBitacoras() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('https://localhost:7030/Bitacoras', '_blank');
+        }
+
+        function abrirParametros() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('Debe iniciar sesión primero');
+                window.location.href = '/Login';
+                return;
+            }
+            window.open('https://localhost:7031/Parametros', '_blank');
+        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
