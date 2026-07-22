@@ -6,8 +6,7 @@ public static class CarreraEndpoint
 {
     public static void MapCarreraEndpoints(this WebApplication app)
     {
-        // ✅ Cambiar a /api/carreras para evitar conflicto
-        var group = app.MapGroup("/api/carreras").WithTags("Carreras");
+        var group = app.MapGroup("/carreras");
 
         group.MapGet("/", async (ICarreraService service) =>
         {
@@ -33,7 +32,7 @@ public static class CarreraEndpoint
             {
                 await bitacora.Registrar("Administrador del Sistema", $"Creó la carrera {request.Nombre}");
 
-                return Results.Created($"/api/carreras/{result.id}", new
+                return Results.Created($"/carreras/{result.id}", new
                 {
                     message = result.message,
                     carrera = new

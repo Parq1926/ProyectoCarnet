@@ -1,65 +1,99 @@
-using TipoIdentificacionSRV6.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using SRV6_TipoIdentificacion.Data;
+using SRV6_TipoIdentificacion.DTOs;
+using SRV6_TipoIdentificacion.Entities;
+using SRV6_TipoIdentificacion.Interfaces;
 
-namespace TipoIdentificacionSRV6.Services
+namespace SRV6_TipoIdentificacion.Services;
+
+public class TipoIdentificacionService : ITipoIdentificacionService
 {
-    public class TipoIdentificacionService : ITipoIdentificacionService
+    private readonly ApplicationDbContext _db;
+
+    public TipoIdentificacionService(ApplicationDbContext db)
     {
-        private readonly ITipoIdentificacionApiClient _apiClient;
+        _db = db;
+    }
 
-        public TipoIdentificacionService(ITipoIdentificacionApiClient apiClient)
-        {
-            _apiClient = apiClient;
-        }
+    public async Task<IEnumerable<TipoIdentificacionDto>> GetAllAsync()
+    {
+        return await _db.TiposIdentificacion
+            .Select(t => new TipoIdentificacionDto { Id = t.Id, Nombre = t.Nombre })
+            .ToListAsync();
+    }
 
-        public async Task<IEnumerable<TipoIdentificacionDto>> GetAllAsync()
-        {
-            return await _apiClient.GetAllAsync();
-        }
+    public async Task<TipoIdentificacionDto?> GetByIdAsync(int id)
+    {
+        var tipo = await _db.TiposIdentificacion.FindAsync(id);
+        if (tipo == null) return null;
 
-        public async Task<TipoIdentificacionDto?> GetByIdAsync(int id)
-        {
-            return await _apiClient.GetByIdAsync(id);
-        }
+        return new TipoIdentificacionDto { Id = tipo.Id, Nombre = tipo.Nombre };
+    }
 
-        public async Task<int> CreateAsync(TipoIdentificacionCreateDto dto)
-        {
-            var (ok, status, message) = await _apiClient.CreateAsync(dto);
-            if (!ok)
-            {
-                throw new Exception(message ?? "Error al crear el tipo de identificacion");
-            }
-            var all = await _apiClient.GetAllAsync();
-            return all.OrderByDescending(x => x.Id).FirstOrDefault()?.Id ?? 0;
-        }
+    public async Task<(bool ok, string error, TipoIdentificacionDto? data)> CreateAsync(CrearTipoIdentificacionDto dto)
+    {
+        // Validar que el nombre no esté vacío
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            return (false, "El nombre es requerido", null);
 
-        public async Task<int> UpdateAsync(TipoIdentificacionUpdateDto dto)
-        {
-            var (ok, status, message) = await _apiClient.UpdateAsync(dto.Id, dto);
-            if (!ok)
-            {
-                throw new Exception(message ?? "Error al actualizar el tipo de identificacion");
-            }
-            return dto.Id;
-        }
+        // Validar que no exista un tipo con el mismo nombre
+        var existe = await _db.TiposIdentificacion.AnyAsync(t => t.Nombre == dto.Nombre);
+        if (existe)
+            return (false, $"El tipo de identificación '{dto.Nombre}' ya existe", null);
 
-        public async Task<int> DeleteAsync(int id)
-        {
-            var (ok, status, message) = await _apiClient.DeleteAsync(id);
-            if (!ok)
-            {
-                throw new Exception(message ?? "Error al eliminar el tipo de identificacion");
-            }
-            return id;
-        }
+        // Crear el nuevo tipo
+        var tipo = new TipoIdentificacion { Nombre = dto.Nombre };
+        _db.TiposIdentificacion.Add(tipo);
+        await _db.SaveChangesAsync();
 
-        public async Task<bool> ExistsAsync(int id)
+        return (true, "Tipo de identificación creado exitosamente", new TipoIdentificacionDto
         {
-            return await _apiClient.ExistsAsync(id);
-        }
+            Id = tipo.Id,
+            Nombre = tipo.Nombre
+        });
+    }
 
-        public async Task<bool> ExistsByNameAsync(string nombre, int? excludeId = null)
+    public async Task<(bool ok, string error, TipoIdentificacionDto? data)> UpdateAsync(int id, CrearTipoIdentificacionDto dto)
+    {
+        // Validar que el nombre no esté vacío
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            return (false, "El nombre es requerido", null);
+
+        // Buscar el tipo a actualizar
+        var tipo = await _db.TiposIdentificacion.FindAsync(id);
+        if (tipo == null)
+            return (false, $"Tipo de identificación con ID {id} no encontrado", null);
+
+        // Validar que no exista otro tipo con el mismo nombre
+        var existe = await _db.TiposIdentificacion.AnyAsync(t => t.Nombre == dto.Nombre && t.Id != id);
+        if (existe)
+            return (false, $"Ya existe otro tipo con el nombre '{dto.Nombre}'", null);
+
+        var nombreAnterior = tipo.Nombre;
+        tipo.Nombre = dto.Nombre;
+        await _db.SaveChangesAsync();
+
+        return (true, $"Se cambió de '{nombreAnterior}' a '{tipo.Nombre}'", new TipoIdentificacionDto
         {
-            return await _apiClient.ExistsByNameAsync(nombre, excludeId);
-        }
+            Id = tipo.Id,
+            Nombre = tipo.Nombre
+        });
+    }
+
+    public async Task<(bool ok, string error)> DeleteAsync(int id)
+    {
+        var tipo = await _db.TiposIdentificacion.FindAsync(id);
+        if (tipo == null)
+            return (false, $"Tipo de identificación con ID {id} no encontrado");
+
+        _db.TiposIdentificacion.Remove(tipo);
+        await _db.SaveChangesAsync();
+
+        return (true, $"Tipo de identificación '{tipo.Nombre}' (ID: {id}) eliminado exitosamente");
+    }
+
+    public async Task<bool> ValidarExistenciaAsync(string nombre)
+    {
+        return await _db.TiposIdentificacion.AnyAsync(t => t.Nombre == nombre);
     }
 }

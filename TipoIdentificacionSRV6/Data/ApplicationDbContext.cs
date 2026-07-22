@@ -1,37 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TipoIdentificacionSRV6.Entities;
+using SRV6_TipoIdentificacion.Entities;
 
-namespace TipoIdentificacionSRV6.Data
+namespace SRV6_TipoIdentificacion.Data;
+
+public class ApplicationDbContext : DbContext
 {
-    public class ApplicationDbContext : DbContext
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+    public DbSet<TipoIdentificacion> TiposIdentificacion { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<TipoIdentificacion>().ToTable("TIPOIDENTIFICACION", "PameRojas");
+
+        modelBuilder.Entity<TipoIdentificacion>(entity =>
         {
-        }
-
-        public DbSet<TipoIdentificacion> TiposIdentificacion { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<TipoIdentificacion>(entity =>
-            {
-                entity.ToTable("TIPOIDENTIFICACION", "PameRojas");
-
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id)
-                    .HasColumnName("ID")
-                    .ValueGeneratedOnAdd();
-
-                entity.Property(e => e.Nombre)
-                    .HasColumnName("NOMBRE")
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.HasIndex(e => e.Nombre).IsUnique();
-            });
-        }
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.Nombre).HasColumnName("NOMBRE");
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
+        });
     }
 }

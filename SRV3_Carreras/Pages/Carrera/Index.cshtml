@@ -1,0 +1,514 @@
+﻿@page
+@model SRV3_Carreras.Pages.Carrera.IndexModel
+@{
+    ViewData["Title"] = "Administracion de Carreras";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/sitecarreras.css" />
+
+<div class="page-header">
+    <h2><i class="fas fa-graduation-cap"></i> Lista de Carreras</h2>
+    <div>
+        <button class="btn btn-primary" onclick="abrirModalCrear()">
+            <i class="fas fa-plus"></i> Nueva Carrera
+        </button>
+        <button class="btn btn-info" onclick="abrirModalBuscar()">
+            <i class="fas fa-search"></i> Buscar por ID
+        </button>
+    </div>
+</div>
+
+<div id="alertas"></div>
+
+<div id="loading" class="loading" style="display:none;">
+    <div class="spinner-border"></div>
+    <p class="mt-2">Cargando carreras...</p>
+</div>
+
+<div id="listaCarreras" class="carrera-grid"></div>
+
+<!-- ======================================== -->
+<!-- MODAL BUSCAR POR ID -->
+<!-- ======================================== -->
+<div class="modal" id="modalBuscar">
+    <div class="modal-dialog" style="max-width:500px;">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#17a2b8;">
+                <h5 class="modal-title">Buscar Carrera por ID</h5>
+                <button class="btn-close" onclick="cerrarModalBuscar()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Ingrese el ID de la carrera</label>
+                    <input id="buscarId" type="number" class="form-control" placeholder="Ej: 1, 2, 3..." min="1">
+                </div>
+                <div id="buscarResultado" style="margin-top:15px; display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalBuscar()">Cancelar</button>
+                <button class="btn btn-info" onclick="buscarCarreraPorId()">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================== -->
+<!-- MODAL CREAR / EDITAR -->
+<!-- ======================================== -->
+<div class="modal" id="modalFormulario">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModal">Nueva Carrera</h5>
+                <button class="btn-close" onclick="cerrarModalFormulario()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="idCarrera" value="0">
+
+                <div class="form-group">
+                    <label>Nombre *</label>
+                    <input id="nombre" class="form-control" placeholder="Nombre de la carrera">
+                    <div class="invalid-feedback" id="errNombre"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Director *</label>
+                    <input id="director" class="form-control" placeholder="Nombre del director">
+                    <div class="invalid-feedback" id="errDirector"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input id="email" class="form-control" placeholder="ejemplo@cuc.ac.cr">
+                    <small style="color: #6c757d; font-size: 12px;">Solo @@cuc.ac.cr o @@cuc.cr</small>
+                    <div class="invalid-feedback" id="errEmail"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Telefono *</label>
+                    <input id="telefono" class="form-control" placeholder="Solo numeros">
+                    <div class="invalid-feedback" id="errTelefono"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre Institucion *</label>
+                    <input id="institucionNombre" class="form-control" placeholder="Nombre de la institucion">
+                    <div class="invalid-feedback" id="errInstitucionNombre"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>ID Institucion *</label>
+                    <input id="institucionID" type="number" class="form-control" placeholder="ID de la institucion">
+                    <div class="invalid-feedback" id="errInstitucionID"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalFormulario()">Cancelar</button>
+                <button class="btn btn-success" onclick="guardarCarrera()">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================== -->
+<!-- MODAL ELIMINAR -->
+<!-- ======================================== -->
+<div class="modal" id="modalEliminar">
+    <div class="modal-dialog" style="max-width:500px;">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#dc3545;">
+                <h5 class="modal-title">Confirmar Eliminacion</h5>
+                <button class="btn-close" onclick="cerrarModalEliminar()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Esta seguro de eliminar la carrera <strong id="nombreEliminar"></strong>?</p>
+                <p style="color: #6c757d; font-size: 14px;">Esta accion no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalEliminar()">Cancelar</button>
+                <button class="btn btn-danger" onclick="eliminarCarrera()">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = window.location.origin + '/carreras';
+    let idEliminar = 0;
+
+    // ========================================
+    // FUNCIONES DE MODALES
+    // ========================================
+
+    function abrirModalCrear() {
+        document.getElementById('tituloModal').textContent = 'Nueva Carrera';
+        document.getElementById('idCarrera').value = '0';
+        document.getElementById('nombre').value = '';
+        document.getElementById('director').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('telefono').value = '';
+        document.getElementById('institucionNombre').value = '';
+        document.getElementById('institucionID').value = '';
+        limpiarErrores();
+        document.getElementById('modalFormulario').style.display = 'flex';
+    }
+
+    function cerrarModalFormulario() {
+        document.getElementById('modalFormulario').style.display = 'none';
+        limpiarErrores();
+    }
+
+    function abrirModalBuscar() {
+        document.getElementById('buscarId').value = '';
+        document.getElementById('buscarResultado').style.display = 'none';
+        document.getElementById('buscarResultado').innerHTML = '';
+        document.getElementById('modalBuscar').style.display = 'flex';
+    }
+
+    function cerrarModalBuscar() {
+        document.getElementById('modalBuscar').style.display = 'none';
+    }
+
+    function abrirModalEliminar(id, nombre) {
+        idEliminar = id;
+        document.getElementById('nombreEliminar').textContent = nombre;
+        document.getElementById('modalEliminar').style.display = 'flex';
+    }
+
+    function cerrarModalEliminar() {
+        document.getElementById('modalEliminar').style.display = 'none';
+    }
+
+    // ========================================
+    // ALERTAS Y LOADING
+    // ========================================
+
+    function mostrarAlerta(mensaje, tipo) {
+        const div = document.getElementById('alertas');
+        div.innerHTML = `
+            <div class="alert alert-${tipo} alert-dismissible">
+                ${mensaje}
+                <button onclick="this.parentElement.remove()" style="float:right; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+            </div>
+        `;
+        setTimeout(() => { div.innerHTML = ''; }, 4000);
+    }
+
+    function mostrarLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+    }
+
+    // ========================================
+    // BUSCAR POR ID
+    // ========================================
+
+    async function buscarCarreraPorId() {
+        const id = document.getElementById('buscarId').value.trim();
+
+        if (!id || parseInt(id) <= 0) {
+            mostrarAlerta('Ingrese un ID valido mayor a 0', 'warning');
+            return;
+        }
+
+        const resultadoDiv = document.getElementById('buscarResultado');
+        resultadoDiv.style.display = 'block';
+        resultadoDiv.innerHTML = '<div class="loading"><div class="spinner-border"></div><p>Buscando...</p></div>';
+
+        try {
+            const response = await fetch(`${API_URL}/${id}`);
+
+            if (response.status === 404) {
+                resultadoDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No se encontro ninguna carrera con ID ${id}
+                    </div>
+                `;
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Error al buscar');
+            }
+
+            const c = await response.json();
+
+            resultadoDiv.innerHTML = `
+                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #dee2e6;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:14px;">
+                        <div><strong>ID:</strong> ${c.id}</div>
+                        <div><strong>Nombre:</strong> ${c.nombre}</div>
+                        <div><strong>Director:</strong> ${c.director}</div>
+                        <div><strong>Email:</strong> ${c.email}</div>
+                        <div><strong>Telefono:</strong> ${c.telefono}</div>
+                        <div><strong>Institucion:</strong> ${c.institucionNombre}</div>
+                        <div><strong>Estado:</strong> <span class="${c.activo ? 'badge-success' : 'badge-danger'}">${c.activo ? 'Activo' : 'Inactivo'}</span></div>
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:8px;">
+                        <button class="btn btn-warning btn-sm" onclick="editarCarrera(${c.id})">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="abrirModalEliminar(${c.id}, '${c.nombre}')">Eliminar</button>
+                        <button class="btn btn-secondary btn-sm" onclick="cerrarModalBuscar()">Cerrar</button>
+                    </div>
+                </div>
+            `;
+
+        } catch (error) {
+            resultadoDiv.innerHTML = `
+                <div class="alert alert-danger">Error al buscar: ${error.message}</div>
+            `;
+        }
+    }
+
+    // ========================================
+    // VALIDACIONES
+    // ========================================
+
+    function limpiarErrores() {
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+    }
+
+    function mostrarError(campo, mensaje) {
+        const el = document.getElementById(campo);
+        const err = document.getElementById('err' + campo.charAt(0).toUpperCase() + campo.slice(1));
+        el.classList.add('is-invalid');
+        err.textContent = mensaje;
+    }
+
+    function validarFormulario() {
+        let valido = true;
+        limpiarErrores();
+
+        const nombre = document.getElementById('nombre').value.trim();
+        const director = document.getElementById('director').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const institucionNombre = document.getElementById('institucionNombre').value.trim();
+        const institucionID = document.getElementById('institucionID').value.trim();
+
+        if (!nombre) { mostrarError('nombre', 'El nombre es requerido'); valido = false; }
+        if (!director) { mostrarError('director', 'El director es requerido'); valido = false; }
+
+        if (!email) {
+            mostrarError('email', 'El email es requerido');
+            valido = false;
+        } else {
+            const emailRegex = /^[^\s@@]+@@(cuc\.ac\.cr|cuc\.cr)$/;
+            if (!emailRegex.test(email)) {
+                mostrarError('email', 'Solo se permiten @@cuc.ac.cr o @@cuc.cr');
+                valido = false;
+            }
+        }
+
+        if (!telefono) {
+            mostrarError('telefono', 'El telefono es requerido');
+            valido = false;
+        } else if (!/^\d+$/.test(telefono)) {
+            mostrarError('telefono', 'Solo numeros');
+            valido = false;
+        }
+
+        if (!institucionNombre) {
+            mostrarError('institucionNombre', 'El nombre de institucion es requerido');
+            valido = false;
+        }
+
+        if (!institucionID || parseInt(institucionID) <= 0) {
+            mostrarError('institucionID', 'ID de institucion requerido y mayor a 0');
+            valido = false;
+        }
+
+        return valido;
+    }
+
+    function obtenerDatosFormulario() {
+        const data = {
+            nombre: document.getElementById('nombre').value.trim(),
+            director: document.getElementById('director').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            telefono: document.getElementById('telefono').value.trim(),
+            institucionNombre: document.getElementById('institucionNombre').value.trim(),
+            institucionID: parseInt(document.getElementById('institucionID').value)
+        };
+
+        // Si hay un ID, agregarlo al objeto
+        const id = document.getElementById('idCarrera').value;
+        if (id !== '0') {
+            data.ID = parseInt(id);
+        }
+
+        return data;
+    }
+
+    // ========================================
+    // CRUD - LISTAR TODOS
+    // ========================================
+
+    async function cargarCarreras() {
+        const container = document.getElementById('listaCarreras');
+        mostrarLoading(true);
+
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error('Error al cargar');
+            const carreras = await response.json();
+
+            if (!carreras || carreras.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-graduation-cap fa-4x"></i>
+                        <p>No hay carreras registradas</p>
+                        <button class="btn btn-primary" onclick="abrirModalCrear()">
+                            <i class="fas fa-plus"></i> Crear primera carrera
+                        </button>
+                    </div>
+                `;
+                mostrarLoading(false);
+                return;
+            }
+
+            let html = '';
+            carreras.forEach(function(c) {
+                html += `
+                    <div class="carrera-card">
+                        <div class="carrera-card-header">
+                            <h3>${c.nombre}</h3>
+                            <span class="${c.activo ? 'badge-success' : 'badge-danger'}">${c.activo ? 'Activo' : 'Inactivo'}</span>
+                        </div>
+                        <div class="carrera-card-body">
+                            <div class="info-row">
+                                <span class="label"><i class="fas fa-user-tie"></i> Director:</span>
+                                <span class="value">${c.director}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label"><i class="fas fa-envelope"></i> Email:</span>
+                                <span class="value">${c.email}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label"><i class="fas fa-phone"></i> Telefono:</span>
+                                <span class="value">${c.telefono}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label"><i class="fas fa-university"></i> Institucion:</span>
+                                <span class="value">${c.institucionNombre}</span>
+                            </div>
+                        </div>
+                        <div class="carrera-card-footer">
+                            <button class="btn-sm btn-info" onclick="editarCarrera(${c.id})">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="btn-sm btn-danger" onclick="abrirModalEliminar(${c.id}, '${c.nombre}')">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        } catch (error) {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Error al cargar carreras
+                </div>
+            `;
+        }
+
+        mostrarLoading(false);
+    }
+
+    // ========================================
+    // CRUD - CREAR / EDITAR
+    // ========================================
+
+    async function guardarCarrera() {
+        if (!validarFormulario()) return;
+
+        const id = document.getElementById('idCarrera').value;
+        const data = obtenerDatosFormulario();
+        const isEdit = id !== '0';
+        const url = isEdit ? `${API_URL}/${id}` : API_URL;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                mostrarAlerta(isEdit ? 'Carrera actualizada' : 'Carrera creada', 'success');
+                cerrarModalFormulario();
+                cargarCarreras();
+                // Si el modal de busqueda estaba abierto, cerrarlo
+                cerrarModalBuscar();
+            } else {
+                const error = await response.json();
+                mostrarAlerta(error.error || 'Error al guardar', 'danger');
+            }
+        } catch (error) {
+            mostrarAlerta('Error de conexion: ' + error.message, 'danger');
+        }
+    }
+
+    // ========================================
+    // CRUD - EDITAR (OBTENER POR ID + LLENAR MODAL)
+    // ========================================
+
+    async function editarCarrera(id) {
+        try {
+            const response = await fetch(`${API_URL}/${id}`);
+            if (!response.ok) throw new Error('Error al obtener datos');
+            const c = await response.json();
+
+            document.getElementById('tituloModal').textContent = 'Editar Carrera';
+            document.getElementById('idCarrera').value = c.id;
+            document.getElementById('nombre').value = c.nombre;
+            document.getElementById('director').value = c.director;
+            document.getElementById('email').value = c.email;
+            document.getElementById('telefono').value = c.telefono;
+            document.getElementById('institucionNombre').value = c.institucionNombre;
+            document.getElementById('institucionID').value = c.institucionID;
+            limpiarErrores();
+            document.getElementById('modalFormulario').style.display = 'flex';
+        } catch (error) {
+            mostrarAlerta('Error al cargar datos: ' + error.message, 'danger');
+        }
+    }
+
+    // ========================================
+    // CRUD - ELIMINAR
+    // ========================================
+
+    async function eliminarCarrera() {
+        try {
+            const response = await fetch(`${API_URL}/${idEliminar}`, { method: 'DELETE' });
+            if (response.ok) {
+                cerrarModalEliminar();
+                mostrarAlerta('Carrera eliminada', 'success');
+                cargarCarreras();
+                cerrarModalBuscar();
+            } else {
+                const error = await response.json();
+                mostrarAlerta(error.error || 'Error al eliminar', 'danger');
+            }
+        } catch (error) {
+            mostrarAlerta('Error de conexion: ' + error.message, 'danger');
+        }
+    }
+
+    // ========================================
+    // INICIALIZAR
+    // ========================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarCarreras();
+    });
+</script>

@@ -1,6 +1,4 @@
-﻿using AreasSRV7.DTOs;
-using SRV4_Areas.DTOs;
-using SRV4_Areas.Entities;
+﻿using SRV4_Areas.Entities;
 using SRV4_Areas.Repository;
 
 namespace SRV4_Areas.Services;
@@ -14,37 +12,15 @@ public class AreaService : IAreaService
         _repository = repository;
     }
 
-    public async Task<IEnumerable<AreaDto>> GetAll()
+    public async Task<IEnumerable<AreaTrabajo>> GetAll()
     {
-        var areas = await _repository.GetAll();
-        return areas.Select(a => new AreaDto
-        {
-            Id = a.ID,
-            Nombre = a.Nombre,
-            InstitucionId = a.InstitucionID,
-            InstitucionNombre = a.InstitucionNombre,
-            Activo = a.Activo,
-            FechaCreacion = a.FechaCreacion,
-            FechaModificacion = a.FechaModificacion
-        });
+        return await _repository.GetAll();
     }
 
-    public async Task<AreaDto?> GetById(int id)
+    public async Task<AreaTrabajo?> GetById(int id)
     {
         if (id <= 0) return null;
-        var area = await _repository.GetById(id);
-        if (area == null) return null;
-
-        return new AreaDto
-        {
-            Id = area.ID,
-            Nombre = area.Nombre,
-            InstitucionId = area.InstitucionID,
-            InstitucionNombre = area.InstitucionNombre,
-            Activo = area.Activo,
-            FechaCreacion = area.FechaCreacion,
-            FechaModificacion = area.FechaModificacion
-        };
+        return await _repository.GetById(id);
     }
 
     public async Task<(bool success, string message, int? id)> Create(CreateAreaRequest request)

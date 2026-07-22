@@ -12,8 +12,4 @@
   <Project Path="SRV4_Areas/SRV4_Areas.csproj" />
   <Project Path="TipoIdentificacionSRV6/TipoIdentificacionSRV6.csproj" />
   <Project Path="TiposUsuarioSRV5/TiposUsuarioSRV5.csproj" />
-<<<<<<< HEAD
-=======
-  <Project Path="UsuariosSRV4/UsuariosSRV4.csproj" Id="d338235c-a143-48db-966d-0fa3e3dbe33a" />
->>>>>>> a7a79ac (Actualizacion del Login)
 </Solution>

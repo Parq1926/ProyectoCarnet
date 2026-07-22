@@ -1,8 +1,7 @@
-﻿namespace TipoIdentificacionSRV6.Entities
+﻿namespace SRV6_TipoIdentificacion.Entities;
+
+public class TipoIdentificacion
 {
-    public class TipoIdentificacion
-    {
-        public int Id { get; set; }
-        public string Nombre { get; set; } = string.Empty;
-    }
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
 }

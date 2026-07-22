@@ -1,52 +1,41 @@
+﻿// DTOs/AuthDTOs.cs
 namespace LoginSRV1.DTOs
 {
-    public class LoginRequestDto
+    public class LoginDto
     {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string? TipoUsuario { get; set; }
-        public string? IpAddress { get; set; }
-        public string? UserAgent { get; set; }
+        public string Usuario { get; set; } = string.Empty;
+        public string Contrasena { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
     }
 
     public class LoginResponseDto
     {
-        public bool Success { get; set; }
-        public string? Message { get; set; }
-        public string? AccessToken { get; set; }
-        public string? RefreshToken { get; set; }
-        public string? TokenType { get; set; } = "Bearer";
-        public int ExpiresIn { get; set; }
-        public UserInfoDto? User { get; set; }
+        public int Codigo { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public DateTime ExpiresIn { get; set; }
+        public string AccessToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+        public int UsuarioId { get; set; }
+        public string[] Institutions { get; set; } = Array.Empty<string>();
     }
 
-    public class UserInfoDto
+    public class RefreshResponseDto
     {
-        public int Id { get; set; }
-        public string Email { get; set; } = string.Empty;
-        public string NombreCompleto { get; set; } = string.Empty;
-        public string TipoUsuario { get; set; } = string.Empty;
-        public bool Activo { get; set; }
-        public int? TipoUsuarioId { get; set; }
-    }
-
-    public class ValidarCredencialesResponse
-    {
-        public int Id { get; set; }
-        public string Email { get; set; } = string.Empty;
-        public string NombreCompleto { get; set; } = string.Empty;
-        public string TipoUsuario { get; set; } = string.Empty;
-        public bool Activo { get; set; }
-        public bool Bloqueado { get; set; }
-        public int IntentosFallidos { get; set; }
-    }
-
-    public class RefreshTokenRequestDto
-    {
+        public int Codigo { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public DateTime ExpiresIn { get; set; }
+        public string AccessToken { get; set; } = string.Empty;
         public string RefreshToken { get; set; } = string.Empty;
     }
 
-    public class LogoutRequestDto
+    public class TokenValidationDto
+    {
+        public int Codigo { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public bool Valido { get; set; }
+    }
+
+    public class RefreshTokenRequestDto
     {
         public string RefreshToken { get; set; } = string.Empty;
     }

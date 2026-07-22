@@ -1,15 +1,13 @@
-﻿using TiposUsuarioSRV5.DTOs;
+﻿using SRV5_TipoUsuario.DTOs;
 
-namespace TiposUsuarioSRV5.Interfaces
+namespace SRV5_TipoUsuario.Interfaces;
+
+public interface ITipoUsuarioService
 {
-    public interface ITipoUsuarioService
-    {
-        Task<IEnumerable<TipoUsuarioDto>> GetAllAsync();
-        Task<TipoUsuarioDto?> GetByIdAsync(int id);
-        Task<int> CreateAsync(TipoUsuarioCreateDto dto);
-        Task<int> UpdateAsync(int id, TipoUsuarioUpdateDto dto);
-        Task<int> DeleteAsync(int id);
-        Task<bool> ExistsAsync(int id);
-        Task<bool> ExistsByNameAsync(string nombre, int? excludeId = null);
-    }
+    Task<IEnumerable<TipoUsuarioDto>> GetAllAsync();
+    Task<TipoUsuarioDto?> GetByIdAsync(int id);
+    Task<(bool ok, string error, TipoUsuarioDto? data)> CreateAsync(CrearTipoUsuarioDto dto);
+    Task<(bool ok, string error, TipoUsuarioDto? data)> UpdateAsync(int id, CrearTipoUsuarioDto dto);
+    Task<(bool ok, string error)> DeleteAsync(int id);
+    Task<bool> ValidarExistenciaAsync(string nombre);
 }

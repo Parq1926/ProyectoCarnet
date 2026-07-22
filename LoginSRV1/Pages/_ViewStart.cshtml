@@ -1,3 +1,12 @@
-﻿@{
-    Layout = "~/Pages/Shared/_Layout.cshtml";
+﻿<!-- Pages/_ViewStart.cshtml -->
+@{
+    // Si la página es Login, no usar layout
+    if (Context.Request.Path == "/Login")
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "~/Pages/Shared/_Layout.cshtml";
+    }
 }

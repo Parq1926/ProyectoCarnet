@@ -7,23 +7,28 @@
         "Action": "Start"
       },
       {
-<<<<<<< HEAD
         "Path": "TiposUsuarioSRV5\\TiposUsuarioSRV5.csproj",
-=======
-        "Path": "UsuariosSRV4\\UsuariosSRV4.csproj",
->>>>>>> a7a79ac (Actualizacion del Login)
         "Action": "Start"
       },
       {
         "Path": "TipoIdentificacionSRV6\\TipoIdentificacionSRV6.csproj",
         "Action": "Start"
-<<<<<<< HEAD
-=======
       },
       {
-        "Path": "TiposUsuarioSRV5\\TiposUsuarioSRV5.csproj",
+        "Path": "SRV11_AutoRegistro\\SRV11_AutoRegistro.csproj",
         "Action": "Start"
->>>>>>> a7a79ac (Actualizacion del Login)
+      },
+      {
+        "Path": "SRV2_Instituciones\\SRV2_Instituciones.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "SRV3_Carreras\\SRV3_Carreras.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "SRV4_Areas\\SRV4_Areas.csproj",
+        "Action": "Start"
       }
     ]
   }

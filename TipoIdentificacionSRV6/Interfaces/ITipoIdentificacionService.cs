@@ -1,15 +1,13 @@
-using TipoIdentificacionSRV6.DTOs;
+﻿using SRV6_TipoIdentificacion.DTOs;
 
-namespace TipoIdentificacionSRV6.Interfaces
+namespace SRV6_TipoIdentificacion.Interfaces;
+
+public interface ITipoIdentificacionService
 {
-    public interface ITipoIdentificacionService
-    {
-        Task<IEnumerable<TipoIdentificacionDto>> GetAllAsync();
-        Task<TipoIdentificacionDto?> GetByIdAsync(int id);
-        Task<int> CreateAsync(TipoIdentificacionCreateDto dto);
-        Task<int> UpdateAsync(int id, TipoIdentificacionUpdateDto dto);
-        Task<int> DeleteAsync(int id);
-        Task<bool> ExistsAsync(int id);
-        Task<bool> ExistsByNameAsync(string nombre, int? excludeId = null);
-    }
+    Task<IEnumerable<TipoIdentificacionDto>> GetAllAsync();
+    Task<TipoIdentificacionDto?> GetByIdAsync(int id);
+    Task<(bool ok, string error, TipoIdentificacionDto? data)> CreateAsync(CrearTipoIdentificacionDto dto);
+    Task<(bool ok, string error, TipoIdentificacionDto? data)> UpdateAsync(int id, CrearTipoIdentificacionDto dto);
+    Task<(bool ok, string error)> DeleteAsync(int id);
+    Task<bool> ValidarExistenciaAsync(string nombre);
 }

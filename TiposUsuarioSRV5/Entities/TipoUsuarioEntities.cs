@@ -1,18 +1,7 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿namespace SRV5_TipoUsuario.Entities;
 
-namespace TiposUsuarioSRV5.Entities
+public class TipoUsuario
 {
-    [Table("TIPOUSUARIO", Schema = "PameRojas")]
-    public class TipoUsuario
-    {
-        [Key]
-        [Column("ID")]
-        public int Id { get; set; }
-
-        [Required]
-        [MaxLength(50)]
-        [Column("NOMBRE")]
-        public string Nombre { get; set; } = string.Empty;
-    }
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
 }
