@@ -13,6 +13,22 @@
       {
         "Path": "TipoIdentificacionSRV6\\TipoIdentificacionSRV6.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "SRV11_AutoRegistro\\SRV11_AutoRegistro.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "SRV2_Instituciones\\SRV2_Instituciones.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "SRV3_Carreras\\SRV3_Carreras.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "SRV4_Areas\\SRV4_Areas.csproj",
+        "Action": "Start"
       }
     ]
   }
