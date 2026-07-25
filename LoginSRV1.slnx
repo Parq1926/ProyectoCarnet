@@ -1,5 +1,4 @@
 <Solution>
-  <Project Path="BitacoraSRV9/BitacoraSRV9.csproj" />
   <Project Path="CarnetQR/SRV14_CarnetQR.csproj" />
   <Project Path="EstadoUsuario/SRV12_EstadoUsuario.csproj" />
   <Project Path="Fotografia/SRV13_Fotografia.csproj" />
